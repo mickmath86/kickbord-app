@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { MapPin, Search } from "lucide-react"
-import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
 
 interface WizardPropertyAddressProps {
   onNext: () => void
@@ -14,6 +13,8 @@ interface WizardPropertyAddressProps {
   onClose: () => void
   isFirstStep: boolean
   isLastStep: boolean
+  data: any
+  updateData: (data: any) => void
 }
 
 declare global {
@@ -23,14 +24,19 @@ declare global {
   }
 }
 
-export function WizardPropertyAddress({ onNext, onPrevious, isFirstStep }: WizardPropertyAddressProps) {
-  const { data, updateData } = useCampaignData()
+export function WizardPropertyAddress({
+  onNext,
+  onPrevious,
+  isFirstStep,
+  data,
+  updateData,
+}: WizardPropertyAddressProps) {
   const [isLoaded, setIsLoaded] = useState(false)
   const autocompleteRef = useRef<HTMLInputElement>(null)
   const autocompleteInstance = useRef<any>(null)
 
   useEffect(() => {
-    // Load Google Places API
+    // Load Google Places API (New)
     if (!window.google) {
       const script = document.createElement("script")
       script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initAutocomplete`
@@ -61,6 +67,7 @@ export function WizardPropertyAddress({ onNext, onPrevious, isFirstStep }: Wizar
     autocompleteInstance.current = new window.google.maps.places.Autocomplete(autocompleteRef.current, {
       types: ["address"],
       componentRestrictions: { country: "us" },
+      fields: ["formatted_address", "address_components", "geometry"],
     })
 
     autocompleteInstance.current.addListener("place_changed", () => {
@@ -76,7 +83,7 @@ export function WizardPropertyAddress({ onNext, onPrevious, isFirstStep }: Wizar
   }
 
   const isFormValid = () => {
-    return data.address.trim().length > 0
+    return data.address && data.address.trim().length > 0
   }
 
   return (
@@ -105,7 +112,7 @@ export function WizardPropertyAddress({ onNext, onPrevious, isFirstStep }: Wizar
               ref={autocompleteRef}
               id="address"
               placeholder="Start typing the property address..."
-              value={data.address}
+              value={data.address || ""}
               onChange={(e) => handleManualInput(e.target.value)}
               className="text-lg py-3"
             />

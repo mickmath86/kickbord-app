@@ -5,11 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { X, Plus, Star, Tag } from "lucide-react"
-import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
+import { Star, Plus, X } from "lucide-react"
 
 interface WizardPropertyDetailsProps {
   onNext: () => void
@@ -17,188 +15,209 @@ interface WizardPropertyDetailsProps {
   onClose: () => void
   isFirstStep: boolean
   isLastStep: boolean
+  data: any
+  updateData: (data: any) => void
 }
 
-const keyFeatures = [
-  "Pool",
-  "Garage",
-  "ADU",
-  "Fireplace",
-  "Renovated Kitchen",
-  "EV Charger",
+const SUGGESTED_FEATURES = [
+  "Hardwood Floors",
+  "Granite Countertops",
+  "Stainless Steel Appliances",
   "Walk-in Closet",
-  "Outdoor Space",
-  "In-Unit Laundry",
-  "Gated Access",
-  "Smart Home Features",
+  "Fireplace",
+  "Swimming Pool",
+  "Garage",
+  "Deck/Patio",
+  "Updated Kitchen",
+  "Master Suite",
+  "Basement",
+  "Fenced Yard",
+  "Central Air",
+  "New Roof",
+  "Energy Efficient",
 ]
 
-export function WizardPropertyDetails({ onNext, onPrevious, isFirstStep }: WizardPropertyDetailsProps) {
-  const { data, updateData } = useCampaignData()
-  const [newKeyword, setNewKeyword] = useState("")
+const SUGGESTED_KEYWORDS = [
+  "Move-in Ready",
+  "Updated",
+  "Spacious",
+  "Charming",
+  "Modern",
+  "Cozy",
+  "Luxury",
+  "Family-Friendly",
+  "Quiet Neighborhood",
+  "Great Location",
+  "Investment Opportunity",
+  "Starter Home",
+  "Dream Home",
+  "Must See",
+  "Price Reduced",
+]
+
+export function WizardPropertyDetails({
+  onNext,
+  onPrevious,
+  isFirstStep,
+  data,
+  updateData,
+}: WizardPropertyDetailsProps) {
   const [newFeature, setNewFeature] = useState("")
+  const [newKeyword, setNewKeyword] = useState("")
 
-  const handleFeatureChange = (feature: string, checked: boolean) => {
-    const updatedFeatures = checked ? [...data.key_features, feature] : data.key_features.filter((f) => f !== feature)
-    updateData({ key_features: updatedFeatures })
-  }
-
-  const addKeyword = () => {
-    if (newKeyword.trim() && !data.keywords.includes(newKeyword.trim())) {
-      updateData({ keywords: [...data.keywords, newKeyword.trim()] })
-      setNewKeyword("")
-    }
-  }
-
-  const removeKeyword = (keyword: string) => {
-    updateData({ keywords: data.keywords.filter((k) => k !== keyword) })
-  }
-
-  const addCustomFeature = () => {
-    if (newFeature.trim() && !data.key_features.includes(newFeature.trim())) {
-      updateData({ key_features: [...data.key_features, newFeature.trim()] })
+  const addFeature = (feature: string) => {
+    if (feature.trim() && !data.keyFeatures?.includes(feature.trim())) {
+      updateData({
+        keyFeatures: [...(data.keyFeatures || []), feature.trim()],
+      })
       setNewFeature("")
     }
   }
 
-  const removeCustomFeature = (feature: string) => {
-    updateData({ key_features: data.key_features.filter((f) => f !== feature) })
+  const removeFeature = (index: number) => {
+    const updatedFeatures = [...(data.keyFeatures || [])]
+    updatedFeatures.splice(index, 1)
+    updateData({ keyFeatures: updatedFeatures })
+  }
+
+  const addKeyword = (keyword: string) => {
+    if (keyword.trim() && !data.keywords?.includes(keyword.trim())) {
+      updateData({
+        keywords: [...(data.keywords || []), keyword.trim()],
+      })
+      setNewKeyword("")
+    }
+  }
+
+  const removeKeyword = (index: number) => {
+    const updatedKeywords = [...(data.keywords || [])]
+    updatedKeywords.splice(index, 1)
+    updateData({ keywords: updatedKeywords })
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-2xl mx-auto space-y-8">
       <div className="text-center">
-        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Star className="h-8 w-8 text-blue-600" />
+        <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Star className="h-8 w-8 text-purple-600" />
         </div>
         <h2 className="text-3xl font-bold mb-4">Features & Details</h2>
         <p className="text-lg text-muted-foreground">Highlight what makes this property special</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Key Features */}
+      <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Star className="h-5 w-5" />
-              Key Features
-            </CardTitle>
+            <CardTitle>Key Features</CardTitle>
+            <p className="text-sm text-muted-foreground">Add the standout features that buyers will love</p>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <Label>Select all that apply</Label>
-              <div className="grid grid-cols-2 gap-3 mt-3">
-                {keyFeatures.map((feature) => (
-                  <div key={feature} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={feature}
-                      checked={data.key_features.includes(feature)}
-                      onCheckedChange={(checked) => handleFeatureChange(feature, checked as boolean)}
-                    />
-                    <Label htmlFor={feature} className="text-sm">
-                      {feature}
-                    </Label>
-                  </div>
-                ))}
-              </div>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {SUGGESTED_FEATURES.map((feature) => (
+                <Badge
+                  key={feature}
+                  variant={data.keyFeatures?.includes(feature) ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => addFeature(feature)}
+                >
+                  {feature}
+                  {data.keyFeatures?.includes(feature) && <Plus className="ml-1 h-3 w-3" />}
+                </Badge>
+              ))}
             </div>
 
-            {/* Custom Features */}
-            <div>
-              <Label>Add Custom Features</Label>
-              <div className="flex gap-2 mt-2">
-                <Input
-                  placeholder="e.g., Wine cellar, Home theater"
-                  value={newFeature}
-                  onChange={(e) => setNewFeature(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && addCustomFeature()}
-                />
-                <Button type="button" onClick={addCustomFeature} size="sm">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-3">
-                {data.key_features
-                  .filter((feature) => !keyFeatures.includes(feature))
-                  .map((feature) => (
-                    <Badge key={feature} variant="secondary" className="flex items-center gap-1">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add custom feature..."
+                value={newFeature}
+                onChange={(e) => setNewFeature(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && addFeature(newFeature)}
+              />
+              <Button onClick={() => addFeature(newFeature)} disabled={!newFeature.trim()}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {data.keyFeatures && data.keyFeatures.length > 0 && (
+              <div>
+                <Label className="text-sm font-medium">Selected Features:</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {data.keyFeatures.map((feature: string, index: number) => (
+                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
                       {feature}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          removeCustomFeature(feature)
-                        }}
-                        className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
-                      >
+                      <button onClick={() => removeFeature(index)} className="ml-1 hover:bg-red-100 rounded-full p-0.5">
                         <X className="h-3 w-3" />
                       </button>
                     </Badge>
                   ))}
+                </div>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Keywords & Notes */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Tag className="h-5 w-5" />
-              Marketing Keywords & Notes
-            </CardTitle>
+            <CardTitle>Marketing Keywords</CardTitle>
+            <p className="text-sm text-muted-foreground">Choose words that will attract potential buyers</p>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <Label>Marketing Keywords</Label>
-              <p className="text-sm text-muted-foreground mb-2">
-                Add phrases like "walk to beach", "corner lot", "quiet street"
-              </p>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add keyword or phrase"
-                  value={newKeyword}
-                  onChange={(e) => setNewKeyword(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && addKeyword()}
-                />
-                <Button type="button" onClick={addKeyword} size="sm">
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              <div className="flex flex-wrap gap-2 mt-3">
-                {data.keywords.map((keyword) => (
-                  <Badge key={keyword} variant="secondary" className="flex items-center gap-1">
-                    {keyword}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        removeKeyword(keyword)
-                      }}
-                      className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
+          <CardContent className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              {SUGGESTED_KEYWORDS.map((keyword) => (
+                <Badge
+                  key={keyword}
+                  variant={data.keywords?.includes(keyword) ? "default" : "outline"}
+                  className="cursor-pointer"
+                  onClick={() => addKeyword(keyword)}
+                >
+                  {keyword}
+                  {data.keywords?.includes(keyword) && <Plus className="ml-1 h-3 w-3" />}
+                </Badge>
+              ))}
             </div>
 
-            <div>
-              <Label htmlFor="additional-notes">Additional Notes</Label>
-              <Textarea
-                id="additional-notes"
-                placeholder="Any additional information about the property that would help with marketing..."
-                value={data.additional_notes}
-                onChange={(e) => updateData({ additional_notes: e.target.value })}
-                rows={6}
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add custom keyword..."
+                value={newKeyword}
+                onChange={(e) => setNewKeyword(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && addKeyword(newKeyword)}
               />
-              <p className="text-sm text-muted-foreground mt-2">
-                Include details about the neighborhood, recent upgrades, or unique selling points
-              </p>
+              <Button onClick={() => addKeyword(newKeyword)} disabled={!newKeyword.trim()}>
+                <Plus className="h-4 w-4" />
+              </Button>
             </div>
+
+            {data.keywords && data.keywords.length > 0 && (
+              <div>
+                <Label className="text-sm font-medium">Selected Keywords:</Label>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {data.keywords.map((keyword: string, index: number) => (
+                    <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                      {keyword}
+                      <button onClick={() => removeKeyword(index)} className="ml-1 hover:bg-red-100 rounded-full p-0.5">
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Additional Notes</CardTitle>
+            <p className="text-sm text-muted-foreground">Any special details or unique selling points</p>
+          </CardHeader>
+          <CardContent>
+            <Textarea
+              placeholder="e.g., Recently renovated kitchen, quiet cul-de-sac location, walking distance to schools..."
+              value={data.additionalNotes || ""}
+              onChange={(e) => updateData({ additionalNotes: e.target.value })}
+              rows={4}
+            />
           </CardContent>
         </Card>
       </div>
@@ -209,7 +228,7 @@ export function WizardPropertyDetails({ onNext, onPrevious, isFirstStep }: Wizar
           Previous
         </Button>
         <Button onClick={onNext} size="lg">
-          Next: Media Upload
+          Next: Upload Photos
         </Button>
       </div>
     </div>
