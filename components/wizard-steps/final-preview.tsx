@@ -1,10 +1,13 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { Download, CheckCircle, Share2, FileText, MessageSquare, Globe, Mail } from "lucide-react"
+import { Download, Share2, CheckCircle, ExternalLink } from "lucide-react"
 import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
+import { useRouter } from "next/navigation"
 
 interface WizardFinalPreviewProps {
   onNext: () => void
@@ -14,146 +17,225 @@ interface WizardFinalPreviewProps {
   isLastStep: boolean
 }
 
-const materialIcons = {
-  social_media: MessageSquare,
-  landing_page: Globe,
-  email_template: Mail,
-  print_flyer: FileText,
-}
-
-const materialLabels = {
-  social_media: "Social Media Posts",
-  landing_page: "Landing Page",
-  email_template: "Email Template",
-  print_flyer: "Print Flyer",
-}
-
-export function WizardFinalPreview({ onPrevious, onClose, isFirstStep }: WizardFinalPreviewProps) {
+export function WizardFinalPreview({ onPrevious, onClose }: WizardFinalPreviewProps) {
   const { data } = useCampaignData()
+  const [isCompleting, setIsCompleting] = useState(false)
+  const [isComplete, setIsComplete] = useState(false)
+  const router = useRouter()
 
-  const handleDownloadAll = () => {
-    // Implementation for downloading all materials
-    console.log("Downloading all materials...")
+  const handleComplete = async () => {
+    setIsCompleting(true)
+
+    // Simulate saving campaign
+    await new Promise((resolve) => setTimeout(resolve, 2000))
+
+    setIsComplete(true)
+
+    // Redirect after showing success
+    setTimeout(() => {
+      router.push("/dashboard/campaigns")
+      onClose()
+    }, 2000)
   }
 
-  const handleDownloadMaterial = (material: string) => {
-    // Implementation for downloading specific material
-    console.log(`Downloading ${material}...`)
+  if (isComplete) {
+    return (
+      <div className="max-w-2xl mx-auto text-center py-12">
+        <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold mb-2">Campaign Created Successfully!</h2>
+        <p className="text-muted-foreground mb-6">
+          Your marketing materials are ready and your campaign has been saved.
+        </p>
+        <div className="text-sm text-muted-foreground">Redirecting to campaigns...</div>
+      </div>
+    )
   }
 
-  const handleSaveCampaign = () => {
-    // Implementation for saving campaign
-    console.log("Saving campaign...")
-    onClose()
-  }
+  const selectedContent = data.selected_copy || {}
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
-      <div className="text-center">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <CheckCircle className="h-8 w-8 text-green-600" />
-        </div>
-        <h2 className="text-3xl font-bold mb-4">Campaign Complete!</h2>
-        <p className="text-lg text-muted-foreground">Your marketing materials are ready for {data.address}</p>
-      </div>
-
-      {/* Selected Channels */}
+    <div className="max-w-4xl mx-auto">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Share2 className="h-5 w-5" />
-            Selected Marketing Channels
+          <CardTitle className="flex items-center space-x-2">
+            <CheckCircle className="h-5 w-5" />
+            <span>Final Preview & Download</span>
           </CardTitle>
+          <CardDescription>
+            Your marketing materials are ready! Preview and download your campaign assets.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {data.materials_to_generate.map((material) => (
-              <Badge key={material} variant="secondary" className="px-3 py-1">
-                {materialLabels[material as keyof typeof materialLabels]}
-              </Badge>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="ads">Social Ads</TabsTrigger>
+              <TabsTrigger value="landing">Landing Page</TabsTrigger>
+              <TabsTrigger value="downloads">Downloads</TabsTrigger>
+            </TabsList>
 
-      {/* Generated Materials */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>Generated Marketing Materials</CardTitle>
-            <Button onClick={handleDownloadAll} className="bg-blue-600 hover:bg-blue-700">
-              <Download className="mr-2 h-4 w-4" />
-              Download All
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {data.materials_to_generate.map((material) => {
-              const Icon = materialIcons[material as keyof typeof materialIcons]
-              const label = materialLabels[material as keyof typeof materialLabels]
+            <TabsContent value="overview" className="space-y-6">
+              <div className="grid md:grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Property Summary</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div>
+                      <span className="font-medium">Address:</span>
+                      <p className="text-sm text-muted-foreground">{data.address}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Type:</span>
+                      <p className="text-sm text-muted-foreground capitalize">{data.property_type.replace("-", " ")}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Price:</span>
+                      <p className="text-sm text-muted-foreground">${data.price?.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <span className="font-medium">Details:</span>
+                      <p className="text-sm text-muted-foreground">
+                        {data.bedrooms} bed • {data.bathrooms} bath • {data.square_feet?.toLocaleString()} sq ft
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
 
-              return (
-                <div key={material} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <Icon className="h-5 w-5 text-blue-600" />
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">Generated Materials</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {data.materials_to_generate?.map((material) => (
+                        <div key={material} className="flex items-center justify-between">
+                          <span className="text-sm capitalize">{material.replace("_", " ")}</span>
+                          <Badge variant="secondary">Ready</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Key Features</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-wrap gap-2">
+                    {data.key_features.map((feature) => (
+                      <Badge key={feature} variant="outline">
+                        {feature}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="ads" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Facebook & Instagram Ad</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {selectedContent.facebook_ads ? (
+                    <div className="space-y-3 p-4 border rounded-lg bg-gray-50">
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">Headline:</span>
+                        <p className="font-semibold">{selectedContent.facebook_ads.content.headline}</p>
                       </div>
                       <div>
-                        <h3 className="font-medium">{label}</h3>
-                        <p className="text-sm text-muted-foreground">Ready to use</p>
+                        <span className="text-sm font-medium text-gray-600">Body:</span>
+                        <p className="text-sm">{selectedContent.facebook_ads.content.body}</p>
+                      </div>
+                      <div>
+                        <span className="text-sm font-medium text-gray-600">Call-to-Action:</span>
+                        <p className="text-sm font-medium text-blue-600">{selectedContent.facebook_ads.content.cta}</p>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => handleDownloadMaterial(material)}>
-                      <Download className="h-4 w-4" />
+                  ) : (
+                    <p className="text-muted-foreground">No Facebook ad content selected</p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="landing" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Landing Page Preview</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {selectedContent.landing_page ? (
+                    <div className="space-y-4 p-6 border rounded-lg bg-gradient-to-b from-blue-50 to-white">
+                      <h1 className="text-3xl font-bold">{selectedContent.landing_page.content.hero_title}</h1>
+                      <h2 className="text-xl text-gray-600">{selectedContent.landing_page.content.subtitle}</h2>
+                      <p className="text-gray-700">{selectedContent.landing_page.content.description}</p>
+                      <Button className="mt-4">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        View Full Landing Page
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground">No landing page content selected</p>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="downloads" className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                {data.materials_to_generate?.map((material) => (
+                  <Card key={material}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium capitalize">{material.replace("_", " ")}</h3>
+                          <p className="text-sm text-muted-foreground">Ready for download</p>
+                        </div>
+                        <Button size="sm" variant="outline">
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Share Campaign</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex space-x-4">
+                    <Button variant="outline">
+                      <Share2 className="h-4 w-4 mr-2" />
+                      Copy Campaign Link
+                    </Button>
+                    <Button variant="outline">
+                      <Download className="h-4 w-4 mr-2" />
+                      Download All Assets
                     </Button>
                   </div>
-                </div>
-              )
-            })}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+
+          <div className="flex justify-between pt-6 border-t">
+            <Button variant="outline" onClick={onPrevious}>
+              Previous
+            </Button>
+            <Button onClick={handleComplete} disabled={isCompleting} className="bg-green-600 hover:bg-green-700">
+              {isCompleting ? "Completing..." : "Complete Campaign"}
+            </Button>
           </div>
         </CardContent>
       </Card>
-
-      {/* Campaign Summary */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Campaign Summary</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-medium mb-2">Property Details</h4>
-              <div className="text-sm text-muted-foreground space-y-1">
-                <p>{data.address}</p>
-                <p>
-                  {data.bedrooms}BR • {data.bathrooms}BA • {data.square_feet?.toLocaleString()} sq ft
-                </p>
-                <p>${data.price?.toLocaleString()}</p>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-medium mb-2">Style & Tone</h4>
-              <div className="text-sm text-muted-foreground space-y-1">
-                <p>Creative Style: {data.creative_style}</p>
-                <p>Copy Tone: {data.copy_tone.join(", ")}</p>
-                <p>Materials: {data.materials_to_generate.length} types</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Navigation */}
-      <div className="flex justify-between pt-8">
-        <Button variant="outline" onClick={onPrevious} disabled={isFirstStep} size="lg">
-          Previous
-        </Button>
-        <Button onClick={handleSaveCampaign} size="lg" className="bg-green-600 hover:bg-green-700">
-          Save Campaign
-        </Button>
-      </div>
     </div>
   )
 }

@@ -1,215 +1,195 @@
-import { AppSidebar } from "@/components/app-sidebar"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+"use client"
+
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Home, Calendar, TrendingUp, Eye } from "lucide-react"
-import { createClient } from "@/utils/supabase/server"
-import { redirect } from "next/navigation"
-import { CampaignWizardTrigger } from "@/components/campaign-wizard-trigger"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Plus, Search, Filter, MoreHorizontal, Eye, TrendingUp } from "lucide-react"
 import Link from "next/link"
 
-export default async function AllCampaignsPage() {
-  const supabase = await createClient()
+export default function AllCampaignsPage() {
+  const [searchTerm, setSearchTerm] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
 
-  // Get current user
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser()
+  const [campaigns] = useState([
+    {
+      id: 1,
+      address: "123 Oak Street, Beverly Hills, CA",
+      status: "active",
+      created: "2024-01-15",
+      views: 1250,
+      leads: 8,
+      price: 1250000,
+      type: "single-family",
+    },
+    {
+      id: 2,
+      address: "456 Pine Avenue, Santa Monica, CA",
+      status: "generating",
+      created: "2024-01-14",
+      views: 0,
+      leads: 0,
+      price: 850000,
+      type: "condo",
+    },
+    {
+      id: 3,
+      address: "789 Maple Drive, West Hollywood, CA",
+      status: "completed",
+      created: "2024-01-12",
+      views: 2100,
+      leads: 15,
+      price: 975000,
+      type: "townhouse",
+    },
+    {
+      id: 4,
+      address: "321 Sunset Boulevard, Hollywood, CA",
+      status: "active",
+      created: "2024-01-10",
+      views: 890,
+      leads: 5,
+      price: 1100000,
+      type: "single-family",
+    },
+    {
+      id: 5,
+      address: "654 Ocean Drive, Malibu, CA",
+      status: "paused",
+      created: "2024-01-08",
+      views: 3200,
+      leads: 22,
+      price: 2500000,
+      type: "single-family",
+    },
+  ])
 
-  if (userError || !user) {
-    redirect("/login")
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "active":
+        return "bg-green-100 text-green-800"
+      case "generating":
+        return "bg-yellow-100 text-yellow-800"
+      case "completed":
+        return "bg-blue-100 text-blue-800"
+      case "paused":
+        return "bg-gray-100 text-gray-800"
+      default:
+        return "bg-gray-100 text-gray-800"
+    }
   }
 
-  // Get user's campaigns
-  const { data: campaigns, error: campaignsError } = await supabase
-    .from("campaigns")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-
-  const campaignsList = campaigns || []
+  const filteredCampaigns = campaigns.filter((campaign) => {
+    const matchesSearch = campaign.address.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesStatus = statusFilter === "all" || campaign.status === statusFilter
+    return matchesSearch && matchesStatus
+  })
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="/dashboard/campaigns">Overview</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>All Campaigns</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-        </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">All Campaigns</h1>
-              <p className="text-muted-foreground">View and manage all your property listing campaigns</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">All Campaigns</h1>
+          <p className="text-muted-foreground">View and manage all your listing campaigns</p>
+        </div>
+        <Link href="/dashboard/campaigns/create">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Campaign
+          </Button>
+        </Link>
+      </div>
+
+      {/* Filters */}
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search campaigns by address..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
-            <CampaignWizardTrigger>
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="mr-2 h-4 w-4" />
-                New Campaign
-              </Button>
-            </CampaignWizardTrigger>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-48">
+                <Filter className="h-4 w-4 mr-2" />
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="generating">Generating</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+                <SelectItem value="paused">Paused</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Stats */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Campaigns</CardTitle>
-                <Home className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{campaignsList.length}</div>
-                <p className="text-xs text-muted-foreground">Active listing campaigns</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">This Month</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {
-                    campaignsList.filter(
-                      (c) => new Date(c.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-                    ).length
-                  }
-                </div>
-                <p className="text-xs text-muted-foreground">New campaigns created</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Avg. Price</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  $
-                  {campaignsList.length > 0
-                    ? Math.round(
-                        campaignsList.reduce((sum, c) => sum + (c.price || 0), 0) / campaignsList.length,
-                      ).toLocaleString()
-                    : 0}
-                </div>
-                <p className="text-xs text-muted-foreground">Average listing price</p>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Generated Assets</CardTitle>
-                <Eye className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">
-                  {campaignsList.filter((c) => c.status === "completed").length * 4}
-                </div>
-                <p className="text-xs text-muted-foreground">Marketing materials created</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Campaigns List */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Campaigns</CardTitle>
-              <CardDescription>Manage and track your property marketing campaigns</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {campaignsList.length === 0 ? (
-                <div className="text-center py-12">
-                  <Home className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold mb-2">No campaigns yet</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Create your first listing campaign to generate professional marketing materials
-                  </p>
-                  <CampaignWizardTrigger>
-                    <Button className="bg-blue-600 hover:bg-blue-700">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Create Your First Campaign
-                    </Button>
-                  </CampaignWizardTrigger>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {campaignsList.map((campaign) => (
-                    <Link key={campaign.id} href={`/dashboard/campaigns/${campaign.id}`}>
-                      <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
-                        <div className="flex items-center space-x-4">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
-                            <Home className="h-5 w-5 text-blue-600" />
-                          </div>
-                          <div>
-                            <h3 className="font-semibold">{campaign.property_address}</h3>
-                            <p className="text-sm text-muted-foreground">
-                              {campaign.bedrooms}BR • {campaign.bathrooms}BA • {campaign.square_feet?.toLocaleString()}{" "}
-                              sq ft
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                          <div className="text-right">
-                            <p className="text-sm font-medium">${campaign.price?.toLocaleString()}</p>
-                            <p className="text-xs text-muted-foreground capitalize">{campaign.tone} tone</p>
-                          </div>
-                          <Badge
-                            variant={
-                              campaign.status === "completed"
-                                ? "default"
-                                : campaign.status === "generating"
-                                  ? "secondary"
-                                  : "outline"
-                            }
-                            className={
-                              campaign.status === "completed"
-                                ? "bg-green-100 text-green-800"
-                                : campaign.status === "generating"
-                                  ? "bg-yellow-100 text-yellow-800"
-                                  : ""
-                            }
-                          >
-                            {campaign.status}
-                          </Badge>
+      {/* Campaigns List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Campaigns ({filteredCampaigns.length})</CardTitle>
+          <CardDescription>Click on any campaign to view details and performance metrics</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {filteredCampaigns.map((campaign) => (
+              <Link key={campaign.id} href={`/dashboard/campaigns/${campaign.id}`}>
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-medium">{campaign.address}</p>
+                        <div className="flex items-center space-x-4 mt-1">
+                          <p className="text-sm text-muted-foreground">${campaign.price.toLocaleString()}</p>
+                          <p className="text-sm text-muted-foreground capitalize">{campaign.type.replace("-", " ")}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Created {new Date(campaign.created).toLocaleDateString()}
+                          </p>
                         </div>
                       </div>
-                    </Link>
-                  ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-6">
+                    <div className="text-right">
+                      <div className="flex items-center space-x-1">
+                        <Eye className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">{campaign.views.toLocaleString()}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">views</p>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center space-x-1">
+                        <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium">{campaign.leads}</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">leads</p>
+                    </div>
+                    <Badge className={getStatusColor(campaign.status)}>{campaign.status}</Badge>
+                    <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+              </Link>
+            ))}
+          </div>
+
+          {filteredCampaigns.length === 0 && (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No campaigns found matching your criteria.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   )
 }

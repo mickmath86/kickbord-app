@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { MapPin, Search } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { MapPin, Loader2 } from "lucide-react"
+import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
 
 interface WizardPropertyAddressProps {
   onNext: () => void
@@ -13,145 +15,144 @@ interface WizardPropertyAddressProps {
   onClose: () => void
   isFirstStep: boolean
   isLastStep: boolean
-  data: any
-  updateData: (data: any) => void
 }
 
-declare global {
-  interface Window {
-    google: any
-    initAutocomplete: () => void
-  }
-}
-
-export function WizardPropertyAddress({
-  onNext,
-  onPrevious,
-  isFirstStep,
-  data,
-  updateData,
-}: WizardPropertyAddressProps) {
-  const [isLoaded, setIsLoaded] = useState(false)
-  const autocompleteRef = useRef<HTMLInputElement>(null)
-  const autocompleteInstance = useRef<any>(null)
+export function WizardPropertyAddress({ onNext, onPrevious, isFirstStep }: WizardPropertyAddressProps) {
+  const { data, updateData } = useCampaignData()
+  const [isLoading, setIsLoading] = useState(false)
+  const [suggestions, setSuggestions] = useState<any[]>([])
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const autocompleteService = useRef<any>(null)
 
   useEffect(() => {
-    // Load Google Places API (New)
-    if (!window.google) {
-      const script = document.createElement("script")
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initAutocomplete`
-      script.async = true
-      script.defer = true
-
-      window.initAutocomplete = () => {
-        setIsLoaded(true)
-        initializeAutocomplete()
-      }
-
-      document.head.appendChild(script)
-    } else {
-      setIsLoaded(true)
-      initializeAutocomplete()
-    }
-
-    return () => {
-      if (autocompleteInstance.current) {
-        window.google?.maps?.event?.clearInstanceListeners(autocompleteInstance.current)
-      }
+    // Initialize Google Places API
+    if (typeof window !== "undefined" && window.google) {
+      autocompleteService.current = new window.google.maps.places.AutocompleteService()
     }
   }, [])
 
-  const initializeAutocomplete = () => {
-    if (!autocompleteRef.current || !window.google) return
-
-    autocompleteInstance.current = new window.google.maps.places.Autocomplete(autocompleteRef.current, {
-      types: ["address"],
-      componentRestrictions: { country: "us" },
-      fields: ["formatted_address", "address_components", "geometry"],
-    })
-
-    autocompleteInstance.current.addListener("place_changed", () => {
-      const place = autocompleteInstance.current.getPlace()
-      if (place.formatted_address) {
-        updateData({ address: place.formatted_address })
-      }
-    })
-  }
-
-  const handleManualInput = (value: string) => {
+  const handleAddressChange = async (value: string) => {
     updateData({ address: value })
+
+    if (value.length > 2 && autocompleteService.current) {
+      setIsLoading(true)
+      try {
+        const request = {
+          input: value,
+          types: ["address"],
+          componentRestrictions: { country: "us" },
+        }
+
+        autocompleteService.current.getPlacePredictions(request, (predictions: any[], status: any) => {
+          if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
+            setSuggestions(predictions.slice(0, 5))
+            setShowSuggestions(true)
+          } else {
+            setSuggestions([])
+            setShowSuggestions(false)
+          }
+          setIsLoading(false)
+        })
+      } catch (error) {
+        console.error("Error fetching address suggestions:", error)
+        setIsLoading(false)
+      }
+    } else {
+      setSuggestions([])
+      setShowSuggestions(false)
+    }
   }
 
-  const isFormValid = () => {
-    return data.address && data.address.trim().length > 0
+  const handleSuggestionSelect = (suggestion: any) => {
+    updateData({ address: suggestion.description })
+    setSuggestions([])
+    setShowSuggestions(false)
   }
+
+  const canProceed = data.address.trim().length > 0 && data.property_type
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
-      <div className="text-center">
-        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <MapPin className="h-8 w-8 text-blue-600" />
-        </div>
-        <h2 className="text-3xl font-bold mb-4">What's the property address?</h2>
-        <p className="text-lg text-muted-foreground">
-          Enter the full address of the property you want to create marketing materials for
-        </p>
-      </div>
-
+    <div className="max-w-2xl mx-auto">
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Search className="h-5 w-5" />
-            Property Address
+          <CardTitle className="flex items-center space-x-2">
+            <MapPin className="h-5 w-5" />
+            <span>Property Address</span>
           </CardTitle>
+          <CardDescription>Let's start with the property address and type</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="address">Full Address *</Label>
-            <Input
-              ref={autocompleteRef}
-              id="address"
-              placeholder="Start typing the property address..."
-              value={data.address || ""}
-              onChange={(e) => handleManualInput(e.target.value)}
-              className="text-lg py-3"
-            />
-            <p className="text-sm text-muted-foreground mt-2">
-              {isLoaded ? "Start typing and we'll help you find the exact address" : "Loading address suggestions..."}
-            </p>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="address">Property Address *</Label>
+            <div className="relative">
+              <Input
+                ref={inputRef}
+                id="address"
+                placeholder="Enter the property address..."
+                value={data.address}
+                onChange={(e) => handleAddressChange(e.target.value)}
+                onFocus={() => setShowSuggestions(suggestions.length > 0)}
+                className="pr-10"
+              />
+              {isLoading && (
+                <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+              )}
+
+              {/* Address Suggestions */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                  {suggestions.map((suggestion, index) => (
+                    <button
+                      key={suggestion.place_id}
+                      className="w-full px-4 py-2 text-left hover:bg-gray-50 focus:bg-gray-50 focus:outline-none border-b border-gray-100 last:border-b-0"
+                      onClick={() => handleSuggestionSelect(suggestion)}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                        <div>
+                          <div className="text-sm font-medium">{suggestion.structured_formatting?.main_text}</div>
+                          <div className="text-xs text-gray-500">
+                            {suggestion.structured_formatting?.secondary_text}
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
-          {data.address && (
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <MapPin className="h-5 w-5 text-green-600 mt-0.5" />
-                <div>
-                  <p className="font-medium text-green-900">Selected Address:</p>
-                  <p className="text-green-700">{data.address}</p>
-                </div>
-              </div>
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label htmlFor="property_type">Property Type *</Label>
+            <Select value={data.property_type} onValueChange={(value) => updateData({ property_type: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select property type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="single-family">Single Family Home</SelectItem>
+                <SelectItem value="condo">Condominium</SelectItem>
+                <SelectItem value="townhouse">Townhouse</SelectItem>
+                <SelectItem value="duplex">Duplex</SelectItem>
+                <SelectItem value="apartment">Apartment</SelectItem>
+                <SelectItem value="land">Land/Lot</SelectItem>
+                <SelectItem value="commercial">Commercial</SelectItem>
+                <SelectItem value="other">Other</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex justify-between pt-6">
+            <Button variant="outline" onClick={onPrevious} disabled={isFirstStep}>
+              Previous
+            </Button>
+            <Button onClick={onNext} disabled={!canProceed}>
+              Next
+            </Button>
+          </div>
         </CardContent>
       </Card>
-
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="font-medium text-blue-900 mb-2">Why do we need this?</h3>
-        <p className="text-sm text-blue-700">
-          The property address helps us create location-specific marketing copy and ensures accuracy in your listing
-          materials.
-        </p>
-      </div>
-
-      {/* Navigation */}
-      <div className="flex justify-between pt-8">
-        <Button variant="outline" onClick={onPrevious} disabled={isFirstStep} size="lg">
-          Previous
-        </Button>
-        <Button onClick={onNext} disabled={!isFormValid()} size="lg">
-          Next: Property Details
-        </Button>
-      </div>
     </div>
   )
 }

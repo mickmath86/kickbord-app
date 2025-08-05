@@ -1,9 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { Loader2, CheckCircle, FileText, ImageIcon, Globe, Mail } from "lucide-react"
+import { CheckCircle, Loader2, Wand2 } from "lucide-react"
 import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
 
 interface WizardGeneratingProps {
@@ -15,116 +15,132 @@ interface WizardGeneratingProps {
 }
 
 const generationSteps = [
-  { id: 1, label: "Analyzing property details", icon: FileText },
-  { id: 2, label: "Processing media files", icon: ImageIcon },
-  { id: 3, label: "Generating marketing copy", icon: FileText },
-  { id: 4, label: "Creating social media posts", icon: Globe },
-  { id: 5, label: "Building landing page", icon: Globe },
-  { id: 6, label: "Designing print materials", icon: Mail },
-  { id: 7, label: "Finalizing campaign", icon: CheckCircle },
+  { id: 1, label: "Analyzing property details", duration: 2000 },
+  { id: 2, label: "Creating marketing copy", duration: 3000 },
+  { id: 3, label: "Generating social media content", duration: 2500 },
+  { id: 4, label: "Designing graphics and layouts", duration: 3500 },
+  { id: 5, label: "Finalizing materials", duration: 1500 },
 ]
 
 export function WizardGenerating({ onNext }: WizardGeneratingProps) {
-  const { data } = useCampaignData()
+  const { data, updateData } = useCampaignData()
   const [currentStep, setCurrentStep] = useState(0)
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(timer)
-          setTimeout(() => onNext(), 1000)
-          return 100
+    let stepIndex = 0
+    const totalProgress = 0
+
+    const runStep = () => {
+      if (stepIndex >= generationSteps.length) {
+        // Generation complete
+        const mockGeneratedContent = {
+          facebook_ads: {
+            headline: "Stunning Property Now Available!",
+            body: `Discover this beautiful ${data.property_type} at ${data.address}. ${data.bedrooms} bed, ${data.bathrooms} bath with ${data.key_features.slice(0, 3).join(", ")}. Priced at $${data.price?.toLocaleString()}. Don't miss out!`,
+            cta: "Schedule Your Tour Today",
+          },
+          landing_page: {
+            hero_title: `Your Dream Home Awaits at ${data.address}`,
+            description: `This exceptional ${data.property_type} offers ${data.bedrooms} bedrooms and ${data.bathrooms} bathrooms in a prime location.`,
+            features: data.key_features,
+          },
         }
-        return prev + 2
-      })
-    }, 200)
 
-    return () => clearInterval(timer)
-  }, [onNext])
+        updateData({ generated_copy: mockGeneratedContent })
+        setTimeout(onNext, 1000)
+        return
+      }
 
-  useEffect(() => {
-    const stepTimer = setInterval(() => {
-      setCurrentStep((prev) => {
-        if (prev >= generationSteps.length - 1) {
-          clearInterval(stepTimer)
-          return prev
+      const step = generationSteps[stepIndex]
+      setCurrentStep(stepIndex + 1)
+
+      // Animate progress for this step
+      const stepProgress = (stepIndex / generationSteps.length) * 100
+      const nextStepProgress = ((stepIndex + 1) / generationSteps.length) * 100
+
+      let currentProgress = stepProgress
+      const progressInterval = setInterval(() => {
+        currentProgress += (nextStepProgress - stepProgress) / 20
+        setProgress(Math.min(currentProgress, nextStepProgress))
+
+        if (currentProgress >= nextStepProgress) {
+          clearInterval(progressInterval)
         }
-        return prev + 1
-      })
-    }, 1500)
+      }, step.duration / 20)
 
-    return () => clearInterval(stepTimer)
-  }, [])
+      setTimeout(() => {
+        clearInterval(progressInterval)
+        setProgress(nextStepProgress)
+        stepIndex++
+        setTimeout(runStep, 500)
+      }, step.duration)
+    }
+
+    runStep()
+  }, [data, updateData, onNext])
 
   return (
-    <div className="max-w-2xl mx-auto space-y-8">
-      <div className="text-center">
-        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
-        </div>
-        <h2 className="text-3xl font-bold mb-4">Generating Your Campaign</h2>
-        <p className="text-lg text-muted-foreground">
-          We're creating professional marketing materials for {data.address}
-        </p>
-      </div>
-
+    <div className="max-w-2xl mx-auto">
       <Card>
-        <CardContent className="p-8">
-          <div className="space-y-6">
-            <div>
-              <div className="flex justify-between text-sm mb-2">
-                <span>Progress</span>
-                <span>{Math.round(progress)}%</span>
+        <CardHeader className="text-center">
+          <CardTitle className="flex items-center justify-center space-x-2">
+            <Wand2 className="h-5 w-5" />
+            <span>Generating Your Marketing Materials</span>
+          </CardTitle>
+          <CardDescription>Our AI is creating personalized marketing content for your property</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-8">
+          {/* Progress Bar */}
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Progress</span>
+              <span>{Math.round(progress)}%</span>
+            </div>
+            <Progress value={progress} className="w-full" />
+          </div>
+
+          {/* Generation Steps */}
+          <div className="space-y-4">
+            {generationSteps.map((step, index) => (
+              <div key={step.id} className="flex items-center space-x-3">
+                {index < currentStep - 1 ? (
+                  <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+                ) : index === currentStep - 1 ? (
+                  <Loader2 className="h-5 w-5 text-blue-600 animate-spin flex-shrink-0" />
+                ) : (
+                  <div className="h-5 w-5 rounded-full border-2 border-gray-300 flex-shrink-0" />
+                )}
+                <span className={`text-sm ${index < currentStep ? "text-gray-900" : "text-gray-500"}`}>
+                  {step.label}
+                </span>
               </div>
-              <Progress value={progress} className="w-full" />
-            </div>
+            ))}
+          </div>
 
-            <div className="space-y-4">
-              {generationSteps.map((step, index) => {
-                const StepIcon = step.icon
-                const isCompleted = index < currentStep
-                const isCurrent = index === currentStep
-                const isPending = index > currentStep
-
-                return (
-                  <div
-                    key={step.id}
-                    className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
-                      isCompleted
-                        ? "bg-green-50 text-green-700"
-                        : isCurrent
-                          ? "bg-blue-50 text-blue-700"
-                          : "bg-gray-50 text-gray-500"
-                    }`}
-                  >
-                    <div className="flex-shrink-0">
-                      {isCompleted ? (
-                        <CheckCircle className="h-5 w-5 text-green-600" />
-                      ) : isCurrent ? (
-                        <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
-                      ) : (
-                        <StepIcon className="h-5 w-5" />
-                      )}
-                    </div>
-                    <span className="font-medium">{step.label}</span>
-                  </div>
-                )
-              })}
+          {/* What's Being Generated */}
+          <div className="bg-gray-50 rounded-lg p-4">
+            <h3 className="font-medium mb-3">Creating your marketing kit:</h3>
+            <div className="grid grid-cols-2 gap-2 text-sm">
+              {data.materials_to_generate?.map((material) => (
+                <div key={material} className="flex items-center space-x-2">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  <span className="capitalize">{material.replace("_", " ")}</span>
+                </div>
+              ))}
             </div>
+          </div>
+
+          {/* Property Summary */}
+          <div className="text-center text-sm text-muted-foreground">
+            <p>Generating materials for:</p>
+            <p className="font-medium text-gray-900">{data.address}</p>
+            <p>
+              {data.bedrooms} bed • {data.bathrooms} bath • ${data.price?.toLocaleString()}
+            </p>
           </div>
         </CardContent>
       </Card>
-
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-        <h3 className="font-medium text-blue-900 mb-2">What we're creating for you:</h3>
-        <ul className="text-sm text-blue-700 space-y-1">
-          {data.materials_to_generate.map((material) => (
-            <li key={material}>• {material.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}</li>
-          ))}
-        </ul>
-      </div>
     </div>
   )
 }
