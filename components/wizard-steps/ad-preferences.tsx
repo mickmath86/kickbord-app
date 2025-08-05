@@ -4,9 +4,9 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Badge } from "@/components/ui/badge"
-import { Settings, Palette, MessageSquare, Save } from "lucide-react"
+import { Settings, Palette, MessageSquare } from "lucide-react"
 import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
 
 interface WizardAdPreferencesProps {
@@ -17,216 +17,222 @@ interface WizardAdPreferencesProps {
   isLastStep: boolean
 }
 
-const materialOptions = [
-  { id: "facebook_ads", label: "Facebook & Instagram Ads", icon: "📘" },
-  { id: "tiktok_script", label: "TikTok Video Script", icon: "🎵" },
-  { id: "landing_page", label: "Landing Page", icon: "🌐" },
-  { id: "social_graphics", label: "Social Media Graphics", icon: "🎨" },
-  { id: "pdf_flyer", label: "PDF Flyer", icon: "📄" },
-  { id: "email_template", label: "Email Template", icon: "📧" },
+const MATERIAL_OPTIONS = [
+  { id: "social_posts", label: "Social Media Posts", description: "Instagram, Facebook posts" },
+  { id: "property_description", label: "Property Description", description: "Detailed listing copy" },
+  { id: "email_campaign", label: "Email Campaign", description: "Marketing email content" },
+  { id: "flyer", label: "Property Flyer", description: "Printable marketing flyer" },
+  { id: "website_copy", label: "Website Copy", description: "Property website content" },
 ]
 
-const styleOptions = [
-  { id: "modern", label: "Modern & Clean", description: "Minimalist design with clean lines" },
-  { id: "luxury", label: "Luxury & Elegant", description: "Sophisticated and upscale feel" },
-  { id: "warm", label: "Warm & Inviting", description: "Cozy and welcoming atmosphere" },
-  { id: "bold", label: "Bold & Dynamic", description: "Eye-catching and energetic" },
+const CREATIVE_STYLES = [
+  { value: "modern", label: "Modern & Clean" },
+  { value: "luxury", label: "Luxury & Elegant" },
+  { value: "cozy", label: "Cozy & Welcoming" },
+  { value: "professional", label: "Professional & Corporate" },
+  { value: "creative", label: "Creative & Artistic" },
 ]
 
-const toneOptions = [
-  { id: "professional", label: "Professional", description: "Formal and trustworthy" },
-  { id: "friendly", label: "Friendly", description: "Approachable and conversational" },
-  { id: "luxury", label: "Luxury", description: "Sophisticated and exclusive" },
-  { id: "urgent", label: "Urgent", description: "Creates sense of urgency" },
-  { id: "informative", label: "Informative", description: "Educational and detailed" },
+const COPY_TONES = [
+  { id: "professional", label: "Professional" },
+  { id: "friendly", label: "Friendly" },
+  { id: "luxury", label: "Luxury" },
+  { id: "casual", label: "Casual" },
+  { id: "urgent", label: "Urgent" },
+  { id: "informative", label: "Informative" },
 ]
 
-export function WizardAdPreferences({ onNext, onPrevious }: WizardAdPreferencesProps) {
+const LISTING_STYLES = [
+  { id: "detailed", label: "Detailed & Comprehensive" },
+  { id: "concise", label: "Concise & Punchy" },
+  { id: "storytelling", label: "Storytelling Approach" },
+  { id: "feature_focused", label: "Feature-Focused" },
+  { id: "lifestyle", label: "Lifestyle-Oriented" },
+]
+
+export function WizardAdPreferences({ onNext, onPrevious, isFirstStep }: WizardAdPreferencesProps) {
   const { data, updateData } = useCampaignData()
 
-  const handleMaterialToggle = (materialId: string) => {
-    const current = data.materials_to_generate || []
-    const updated = current.includes(materialId) ? current.filter((id) => id !== materialId) : [...current, materialId]
-    updateData({ materials_to_generate: updated })
+  // Add null check for data
+  if (!data) {
+    return <div>Loading...</div>
   }
 
-  const handleStyleChange = (styleId: string) => {
-    updateData({ creative_style: styleId })
+  const handleMaterialToggle = (materialId: string, checked: boolean) => {
+    if (checked) {
+      updateData({ materials_to_generate: [...data.materials_to_generate, materialId] })
+    } else {
+      updateData({ materials_to_generate: data.materials_to_generate.filter((id) => id !== materialId) })
+    }
   }
 
-  const handleToneToggle = (toneId: string) => {
-    const current = data.copy_tone || []
-    const updated = current.includes(toneId) ? current.filter((id) => id !== toneId) : [...current, toneId]
-    updateData({ copy_tone: updated })
+  const handleToneToggle = (toneId: string, checked: boolean) => {
+    if (checked) {
+      updateData({ copy_tone: [...data.copy_tone, toneId] })
+    } else {
+      updateData({ copy_tone: data.copy_tone.filter((id) => id !== toneId) })
+    }
   }
 
-  const canProceed = (data.materials_to_generate?.length || 0) > 0
+  const handleListingStyleToggle = (styleId: string, checked: boolean) => {
+    if (checked) {
+      updateData({ listing_style: [...data.listing_style, styleId] })
+    } else {
+      updateData({ listing_style: data.listing_style.filter((id) => id !== styleId) })
+    }
+  }
+
+  const canProceed = data.materials_to_generate.length > 0 && data.creative_style && data.copy_tone.length > 0
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Materials to Generate */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
             <Settings className="h-5 w-5" />
-            <span>Marketing Preferences</span>
+            <span>Materials to Generate</span>
           </CardTitle>
-          <CardDescription>Choose what marketing materials to generate and set your style preferences</CardDescription>
+          <CardDescription>Select the marketing materials you'd like us to create</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-8">
-          {/* Materials to Generate */}
-          <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <Label className="text-base font-medium">What would you like to generate? *</Label>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              {materialOptions.map((option) => (
-                <div
-                  key={option.id}
-                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                    data.materials_to_generate?.includes(option.id)
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                  onClick={() => handleMaterialToggle(option.id)}
-                >
-                  <div className="flex items-center space-x-3">
-                    <Checkbox
-                      checked={data.materials_to_generate?.includes(option.id) || false}
-                      onChange={() => handleMaterialToggle(option.id)}
-                    />
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg">{option.icon}</span>
-                      <span className="font-medium text-sm">{option.label}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Creative Style */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-base font-medium flex items-center space-x-2">
-                <Palette className="h-4 w-4" />
-                <span>Creative Style</span>
-              </Label>
-              <div className="flex items-center space-x-2">
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {MATERIAL_OPTIONS.map((material) => (
+              <div key={material.id} className="flex items-start space-x-3 p-3 border rounded-lg">
                 <Checkbox
-                  checked={data.save_style || false}
-                  onCheckedChange={(checked) => updateData({ save_style: checked as boolean })}
+                  id={material.id}
+                  checked={data.materials_to_generate.includes(material.id)}
+                  onCheckedChange={(checked) => handleMaterialToggle(material.id, checked as boolean)}
                 />
-                <Label className="text-sm text-muted-foreground flex items-center space-x-1">
-                  <Save className="h-3 w-3" />
-                  <span>Save as default</span>
-                </Label>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 gap-3">
-              {styleOptions.map((option) => (
-                <div
-                  key={option.id}
-                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                    data.creative_style === option.id
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                  onClick={() => handleStyleChange(option.id)}
-                >
-                  <div className="flex items-start space-x-3">
-                    <div
-                      className={`w-4 h-4 rounded-full border-2 mt-0.5 ${
-                        data.creative_style === option.id ? "border-blue-500 bg-blue-500" : "border-gray-300"
-                      }`}
-                    >
-                      {data.creative_style === option.id && <div className="w-2 h-2 bg-white rounded-full m-0.5" />}
-                    </div>
-                    <div>
-                      <div className="font-medium">{option.label}</div>
-                      <div className="text-sm text-muted-foreground">{option.description}</div>
-                    </div>
-                  </div>
+                <div className="flex-1">
+                  <Label htmlFor={material.id} className="font-medium cursor-pointer">
+                    {material.label}
+                  </Label>
+                  <p className="text-sm text-muted-foreground">{material.description}</p>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Copy Tone */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-base font-medium flex items-center space-x-2">
-                <MessageSquare className="h-4 w-4" />
-                <span>Copy Tone (select multiple)</span>
-              </Label>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  checked={data.save_tone_default || false}
-                  onCheckedChange={(checked) => updateData({ save_tone_default: checked as boolean })}
-                />
-                <Label className="text-sm text-muted-foreground flex items-center space-x-1">
-                  <Save className="h-3 w-3" />
-                  <span>Save as default</span>
-                </Label>
               </div>
-            </div>
-            <div className="grid grid-cols-1 gap-3">
-              {toneOptions.map((option) => (
-                <div
-                  key={option.id}
-                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                    data.copy_tone?.includes(option.id)
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                  onClick={() => handleToneToggle(option.id)}
-                >
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      checked={data.copy_tone?.includes(option.id) || false}
-                      onChange={() => handleToneToggle(option.id)}
-                    />
-                    <div>
-                      <div className="font-medium">{option.label}</div>
-                      <div className="text-sm text-muted-foreground">{option.description}</div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {data.copy_tone && data.copy_tone.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {data.copy_tone.map((tone) => (
-                  <Badge key={tone} variant="secondary">
-                    {toneOptions.find((t) => t.id === tone)?.label}
-                  </Badge>
-                ))}
-              </div>
-            )}
+            ))}
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Additional Preferences */}
+      {/* Creative Style */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <Palette className="h-5 w-5" />
+            <span>Creative Style</span>
+          </CardTitle>
+          <CardDescription>Choose the visual and creative style for your materials</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="keywords_to_include">Additional Keywords or Preferences</Label>
+            <Label>Style Preference *</Label>
+            <Select value={data.creative_style || ""} onValueChange={(value) => updateData({ creative_style: value })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a creative style" />
+              </SelectTrigger>
+              <SelectContent>
+                {CREATIVE_STYLES.map((style) => (
+                  <SelectItem key={style.value} value={style.value}>
+                    {style.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="save_style"
+              checked={data.save_style}
+              onCheckedChange={(checked) => updateData({ save_style: checked as boolean })}
+            />
+            <Label htmlFor="save_style" className="text-sm">
+              Save this as my default style preference
+            </Label>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Copy Tone */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center space-x-2">
+            <MessageSquare className="h-5 w-5" />
+            <span>Copy Tone & Style</span>
+          </CardTitle>
+          <CardDescription>Define the tone and style for your marketing copy</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
+            <Label>Copy Tone * (select all that apply)</Label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {COPY_TONES.map((tone) => (
+                <div key={tone.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={tone.id}
+                    checked={data.copy_tone.includes(tone.id)}
+                    onCheckedChange={(checked) => handleToneToggle(tone.id, checked as boolean)}
+                  />
+                  <Label htmlFor={tone.id} className="text-sm cursor-pointer">
+                    {tone.label}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <Label>Listing Style (select all that apply)</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {LISTING_STYLES.map((style) => (
+                <div key={style.id} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={style.id}
+                    checked={data.listing_style.includes(style.id)}
+                    onCheckedChange={(checked) => handleListingStyleToggle(style.id, checked as boolean)}
+                  />
+                  <Label htmlFor={style.id} className="text-sm cursor-pointer">
+                    {style.label}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="keywords_to_include">Additional Keywords to Include</Label>
             <Textarea
               id="keywords_to_include"
-              placeholder="Any specific keywords, phrases, or preferences for your marketing materials..."
+              placeholder="Any specific keywords or phrases you want included in the copy..."
               value={data.keywords_to_include || ""}
               onChange={(e) => updateData({ keywords_to_include: e.target.value })}
               rows={3}
             />
           </div>
 
-          <div className="flex justify-between pt-6">
-            <Button variant="outline" onClick={onPrevious}>
-              Previous
-            </Button>
-            <Button onClick={onNext} disabled={!canProceed}>
-              Generate Marketing Materials
-            </Button>
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="save_tone_default"
+              checked={data.save_tone_default}
+              onCheckedChange={(checked) => updateData({ save_tone_default: checked as boolean })}
+            />
+            <Label htmlFor="save_tone_default" className="text-sm">
+              Save these preferences as my default
+            </Label>
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex justify-between pt-6">
+        <Button variant="outline" onClick={onPrevious} disabled={isFirstStep}>
+          Previous
+        </Button>
+        <Button onClick={onNext} disabled={!canProceed}>
+          Generate Materials
+        </Button>
+      </div>
     </div>
   )
 }

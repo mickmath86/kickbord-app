@@ -32,6 +32,11 @@ export function WizardPropertyAddress({ onNext, onPrevious, isFirstStep }: Wizar
     }
   }, [])
 
+  // Add null check for data
+  if (!data) {
+    return <div>Loading...</div>
+  }
+
   const handleAddressChange = async (value: string) => {
     updateData({ address: value })
 
@@ -70,7 +75,7 @@ export function WizardPropertyAddress({ onNext, onPrevious, isFirstStep }: Wizar
     setShowSuggestions(false)
   }
 
-  const canProceed = data.address.trim().length > 0 && data.property_type
+  const canProceed = (data.address || "").trim().length > 0 && data.property_type
 
   return (
     <div className="max-w-2xl mx-auto">
@@ -90,7 +95,7 @@ export function WizardPropertyAddress({ onNext, onPrevious, isFirstStep }: Wizar
                 ref={inputRef}
                 id="address"
                 placeholder="Enter the property address..."
-                value={data.address}
+                value={data.address || ""}
                 onChange={(e) => handleAddressChange(e.target.value)}
                 onFocus={() => setShowSuggestions(suggestions.length > 0)}
                 className="pr-10"
@@ -126,7 +131,7 @@ export function WizardPropertyAddress({ onNext, onPrevious, isFirstStep }: Wizar
 
           <div className="space-y-2">
             <Label htmlFor="property_type">Property Type *</Label>
-            <Select value={data.property_type} onValueChange={(value) => updateData({ property_type: value })}>
+            <Select value={data.property_type || ""} onValueChange={(value) => updateData({ property_type: value })}>
               <SelectTrigger>
                 <SelectValue placeholder="Select property type" />
               </SelectTrigger>
