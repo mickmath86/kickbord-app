@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Facebook, Instagram, FileText, Globe, Loader2 } from "lucide-react"
+import { CheckCircle, Facebook, Instagram, FileText, Globe, Loader2, Download, DownloadIcon } from "lucide-react"
 import { useCampaignData } from "@/components/campaign-wizard"
 import { useState } from "react"
 import { createClient } from "@/utils/supabase/client"
@@ -80,6 +80,16 @@ export function WizardFinalPreview({ onPrevious, onClose }: WizardFinalPreviewPr
     } finally {
       setIsLaunching(false)
     }
+  }
+
+  const downloadAll = () => {
+    // In a real app, this would generate and download a zip file
+    alert("Downloading all marketing materials...")
+  }
+
+  const downloadMaterial = (material: string) => {
+    // In a real app, this would download the specific material
+    alert(`Downloading ${material} creative...`)
   }
 
   if (isComplete) {
@@ -176,11 +186,44 @@ export function WizardFinalPreview({ onPrevious, onClose }: WizardFinalPreviewPr
           </CardContent>
         </Card>
 
-        {/* Materials Preview */}
+        {/* Selected Channels */}
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>Marketing Materials</CardTitle>
-            <CardDescription>Generated assets ready for deployment</CardDescription>
+            <CardTitle>Selected Channels</CardTitle>
+            <CardDescription>Where your campaign will be deployed</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-3">
+              {data.materials_to_generate.map((material) => {
+                const Icon = materialIcons[material] || FileText
+
+                return (
+                  <div key={material} className="flex items-center space-x-2 bg-blue-50 px-3 py-2 rounded-lg">
+                    <Icon className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm font-medium capitalize">
+                      {material === "pdf" ? "PDF Brochure" : `${material} Ads`}
+                    </span>
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Marketing Materials */}
+        <Card className="md:col-span-2">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Marketing Materials</CardTitle>
+                <CardDescription>Generated assets ready for deployment</CardDescription>
+              </div>
+              <Button onClick={downloadAll} variant="outline" className="flex items-center space-x-2 bg-transparent">
+                <Download className="h-4 w-4" />
+                <span>Download All</span>
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -190,10 +233,19 @@ export function WizardFinalPreview({ onPrevious, onClose }: WizardFinalPreviewPr
                 return (
                   <div key={material} className="text-center p-4 border rounded-lg">
                     <Icon className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                    <p className="font-medium capitalize mb-1">
+                    <p className="font-medium capitalize mb-2">
                       {material === "pdf" ? "PDF Brochure" : `${material} Ad`}
                     </p>
-                    <Badge className="bg-green-100 text-green-800">Ready</Badge>
+                    <Badge className="bg-green-100 text-green-800 mb-3">Ready</Badge>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full bg-transparent"
+                      onClick={() => downloadMaterial(material)}
+                    >
+                      <DownloadIcon className="h-3 w-3 mr-1" />
+                      Download
+                    </Button>
                   </div>
                 )
               })}
@@ -218,31 +270,6 @@ export function WizardFinalPreview({ onPrevious, onClose }: WizardFinalPreviewPr
               <p className="text-sm text-muted-foreground">
                 Professional landing page with lead capture form and property details
               </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Selected Channels */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Selected Channels</CardTitle>
-            <CardDescription>Where your campaign will be deployed</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-3">
-              {data.materials_to_generate.map((material) => {
-                const Icon = materialIcons[material] || FileText
-
-                return (
-                  <div key={material} className="flex items-center space-x-2 bg-blue-50 px-3 py-2 rounded-lg">
-                    <Icon className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium capitalize">
-                      {material === "pdf" ? "PDF Brochure" : `${material} Ads`}
-                    </span>
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  </div>
-                )
-              })}
             </div>
           </CardContent>
         </Card>

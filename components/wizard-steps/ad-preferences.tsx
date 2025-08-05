@@ -33,8 +33,6 @@ const creativeStyles = [
 
 const toneOptions = ["Professional", "Casual", "Luxury", "Friendly", "Urgent", "Minimal"]
 
-const listingStyles = ["Luxury", "Modern", "Traditional", "Farmhouse", "Fixer Upper", "Historic", "New Construction"]
-
 export function WizardAdPreferences({ onNext, onPrevious }: WizardAdPreferencesProps) {
   const { data, updateData } = useCampaignData()
   const [currentStyles, setCurrentStyles] = useState(creativeStyles)
@@ -66,13 +64,6 @@ export function WizardAdPreferences({ onNext, onPrevious }: WizardAdPreferencesP
   const toggleTone = (tone: string) => {
     const tones = data.copy_tone.includes(tone) ? data.copy_tone.filter((t) => t !== tone) : [...data.copy_tone, tone]
     updateData({ copy_tone: tones })
-  }
-
-  const toggleListingStyle = (style: string) => {
-    const styles = data.listing_style.includes(style)
-      ? data.listing_style.filter((s) => s !== style)
-      : [...data.listing_style, style]
-    updateData({ listing_style: styles })
   }
 
   const isValid = data.materials_to_generate.length > 0 && data.creative_style && data.copy_tone.length > 0
@@ -185,32 +176,18 @@ export function WizardAdPreferences({ onNext, onPrevious }: WizardAdPreferencesP
             </div>
           </div>
 
-          {/* Listing Style */}
+          {/* Additional Tone Preferences */}
           <div>
-            <Label className="text-base font-medium">Listing Style (select multiple)</Label>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {listingStyles.map((style) => (
-                <Badge
-                  key={style}
-                  variant={data.listing_style.includes(style) ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => toggleListingStyle(style)}
-                >
-                  {style}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          {/* Keywords to Include */}
-          <div>
-            <Label htmlFor="keywords-include">Keywords to Include</Label>
+            <Label htmlFor="additional-tone">Additional Tone Preferences</Label>
             <Input
-              id="keywords-include"
-              value={data.keywords_to_include}
-              onChange={(e) => updateData({ keywords_to_include: e.target.value })}
-              placeholder="luxury, waterfront, move-in ready..."
+              id="additional-tone"
+              value={data.additional_tone_preferences || ""}
+              onChange={(e) => updateData({ additional_tone_preferences: e.target.value })}
+              placeholder="e.g., emphasize family-friendly, highlight investment potential, focus on luxury amenities..."
             />
+            <p className="text-sm text-muted-foreground mt-1">
+              Provide specific guidance for the tone and messaging of your marketing copy
+            </p>
           </div>
         </div>
       </div>

@@ -33,47 +33,52 @@ export function WizardGenerating({ onNext }: WizardGeneratingProps) {
         } else {
           setIsComplete(true)
           clearInterval(interval)
-
-          // Generate mock copy data
-          const mockGeneratedCopy = {
-            headline: [
-              "Stunning Modern Home in Prime Location",
-              "Your Dream Home Awaits in This Beautiful Property",
-              "Exceptional Living in the Heart of the City",
-            ],
-            eyebrow: ["Just Listed", "New to Market", "Exclusive Opportunity"],
-            subCopy: [
-              "Discover luxury living at its finest",
-              "Where comfort meets elegance",
-              "Your perfect home is waiting",
-            ],
-            fullBio: [
-              "This exceptional property offers the perfect blend of modern amenities and timeless charm. Located in a highly sought-after neighborhood, this home features spacious rooms, updated finishes, and a beautiful outdoor space perfect for entertaining.",
-              "Welcome to your new home! This beautifully maintained property boasts an open floor plan, gourmet kitchen, and luxurious master suite. The private backyard oasis is perfect for relaxation and hosting gatherings with family and friends.",
-              "Step into luxury with this meticulously crafted home. Every detail has been thoughtfully designed to create a warm and inviting atmosphere. From the moment you walk through the front door, you'll feel right at home.",
-            ],
-            amenities: [
-              ["Updated Kitchen", "Spacious Bedrooms", "Private Backyard", "Garage Parking"],
-              ["Modern Appliances", "Walk-in Closets", "Outdoor Entertainment Area", "Storage Space"],
-              ["Premium Finishes", "Natural Light", "Landscaped Yard", "Convenient Location"],
-            ],
-            cta: ["Schedule Your Private Tour Today", "Book a Showing Now", "Contact Us for More Information"],
-          }
-
-          updateData({ generated_copy: mockGeneratedCopy })
-
-          // Auto-advance after showing completion
-          setTimeout(() => {
-            onNext()
-          }, 2000)
-
           return prev
         }
       })
     }, 1500)
 
     return () => clearInterval(interval)
-  }, [onNext, updateData])
+  }, [])
+
+  useEffect(() => {
+    if (isComplete) {
+      // Generate mock copy data
+      const mockGeneratedCopy = {
+        headline: [
+          "Stunning Modern Home in Prime Location",
+          "Your Dream Home Awaits in This Beautiful Property",
+          "Exceptional Living in the Heart of the City",
+        ],
+        eyebrow: ["Just Listed", "New to Market", "Exclusive Opportunity"],
+        subCopy: [
+          "Discover luxury living at its finest",
+          "Where comfort meets elegance",
+          "Your perfect home is waiting",
+        ],
+        fullBio: [
+          "This exceptional property offers the perfect blend of modern amenities and timeless charm. Located in a highly sought-after neighborhood, this home features spacious rooms, updated finishes, and a beautiful outdoor space perfect for entertaining.",
+          "Welcome to your new home! This beautifully maintained property boasts an open floor plan, gourmet kitchen, and luxurious master suite. The private backyard oasis is perfect for relaxation and hosting gatherings with family and friends.",
+          "Step into luxury with this meticulously crafted home. Every detail has been thoughtfully designed to create a warm and inviting atmosphere. From the moment you walk through the front door, you'll feel right at home.",
+        ],
+        amenities: [
+          ["Updated Kitchen", "Spacious Bedrooms", "Private Backyard", "Garage Parking"],
+          ["Modern Appliances", "Walk-in Closets", "Outdoor Entertainment Area", "Storage Space"],
+          ["Premium Finishes", "Natural Light", "Landscaped Yard", "Convenient Location"],
+        ],
+        cta: ["Schedule Your Private Tour Today", "Book a Showing Now", "Contact Us for More Information"],
+      }
+
+      updateData({ generated_copy: mockGeneratedCopy })
+
+      // Auto-advance after showing completion
+      const timeout = setTimeout(() => {
+        onNext()
+      }, 2000)
+
+      return () => clearTimeout(timeout)
+    }
+  }, [isComplete, onNext, updateData])
 
   return (
     <div className="p-6 flex flex-col items-center justify-center min-h-96">

@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { X } from "lucide-react"
+import { X, Plus } from "lucide-react"
 import { useCampaignData } from "@/components/campaign-wizard"
 import { useState } from "react"
 
@@ -38,6 +38,7 @@ const keyFeatures = [
 export function WizardPropertyInfo({ onNext, onPrevious }: WizardPropertyInfoProps) {
   const { data, updateData } = useCampaignData()
   const [newKeyword, setNewKeyword] = useState("")
+  const [newFeature, setNewFeature] = useState("")
 
   const addKeyword = (keyword: string) => {
     if (keyword && !data.keywords.includes(keyword)) {
@@ -50,11 +51,22 @@ export function WizardPropertyInfo({ onNext, onPrevious }: WizardPropertyInfoPro
     updateData({ keywords: data.keywords.filter((k) => k !== keyword) })
   }
 
+  const addCustomFeature = (feature: string) => {
+    if (feature && !data.key_features.includes(feature)) {
+      updateData({ key_features: [...data.key_features, feature] })
+    }
+    setNewFeature("")
+  }
+
   const toggleFeature = (feature: string) => {
     const features = data.key_features.includes(feature)
       ? data.key_features.filter((f) => f !== feature)
       : [...data.key_features, feature]
     updateData({ key_features: features })
+  }
+
+  const removeFeature = (feature: string) => {
+    updateData({ key_features: data.key_features.filter((f) => f !== feature) })
   }
 
   const isValid = data.property_type && data.address && data.price
@@ -188,6 +200,39 @@ export function WizardPropertyInfo({ onNext, onPrevious }: WizardPropertyInfoPro
             </div>
           </div>
 
+          {/* Custom Features */}
+          <div>
+            <Label>Custom Features</Label>
+            <p className="text-sm text-muted-foreground mb-2">Add any additional features not listed above</p>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {data.key_features
+                .filter((feature) => !keyFeatures.includes(feature))
+                .map((feature) => (
+                  <Badge key={feature} variant="secondary" className="flex items-center gap-1">
+                    {feature}
+                    <X className="h-3 w-3 cursor-pointer" onClick={() => removeFeature(feature)} />
+                  </Badge>
+                ))}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                value={newFeature}
+                onChange={(e) => setNewFeature(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && addCustomFeature(newFeature)}
+                placeholder="Add custom feature"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => addCustomFeature(newFeature)}
+                disabled={!newFeature}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+
           <div>
             <Label>Keywords</Label>
             <p className="text-sm text-muted-foreground mb-2">
@@ -201,12 +246,23 @@ export function WizardPropertyInfo({ onNext, onPrevious }: WizardPropertyInfoPro
                 </Badge>
               ))}
             </div>
-            <Input
-              value={newKeyword}
-              onChange={(e) => setNewKeyword(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && addKeyword(newKeyword)}
-              placeholder="Add keyword and press Enter"
-            />
+            <div className="flex gap-2">
+              <Input
+                value={newKeyword}
+                onChange={(e) => setNewKeyword(e.target.value)}
+                onKeyPress={(e) => e.key === "Enter" && addKeyword(newKeyword)}
+                placeholder="Add keyword"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => addKeyword(newKeyword)}
+                disabled={!newKeyword}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           <div>
