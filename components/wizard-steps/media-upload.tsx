@@ -3,16 +3,31 @@
 import type React from "react"
 
 import { useState, useCallback } from "react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Upload, ImageIcon, X, Camera, AlertCircle } from "lucide-react"
-import { useCampaignData } from "@/components/campaign-wizard"
+import { Upload, ImageIcon, X, Camera } from "lucide-react"
+import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
 
-export function WizardMediaUpload() {
-  const { data, updateData, nextStep, prevStep } = useCampaignData()
+interface WizardMediaUploadProps {
+  onNext: () => void
+  onPrevious: () => void
+  onClose: () => void
+  isFirstStep: boolean
+  isLastStep: boolean
+}
+
+interface UploadedFile {
+  id: string
+  file: File
+  preview: string
+  type: "exterior" | "interior" | "other"
+}
+
+export function WizardMediaUpload({ onNext, onPrevious }: WizardMediaUploadProps) {
+  const { data, updateData } = useCampaignData()
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [dragActive, setDragActive] = useState(false)
-  const [uploadedImages, setUploadedImages] = useState<string[]>([])
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -30,55 +45,64 @@ export function WizardMediaUpload() {
     setDragActive(false)
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleFiles(e.dataTransfer.files)
+      handleFiles(Array.from(e.dataTransfer.files))
     }
   }, [])
 
-  const handleFiles = (files: FileList) => {
-    const newImages: string[] = []
-    Array.from(files).forEach((file) => {
-      if (file.type.startsWith("image/")) {
-        const reader = new FileReader()
-        reader.onload = (e) => {
-          if (e.target?.result) {
-            newImages.push(e.target.result as string)
-            setUploadedImages((prev) => [...prev, e.target!.result as string])
-          }
+  const handleFiles = (files: File[]) => {
+    const imageFiles = files.filter((file) => file.type.startsWith("image/"))
+
+    imageFiles.forEach((file) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const newFile: UploadedFile = {
+          id: Math.random().toString(36).substr(2, 9),
+          file,
+          preview: e.target?.result as string,
+          type: "other",
         }
-        reader.readAsDataURL(file)
+        setUploadedFiles((prev) => [...prev, newFile])
       }
+      reader.readAsDataURL(file)
     })
   }
 
-  const removeImage = (index: number) => {
-    setUploadedImages((prev) => prev.filter((_, i) => i !== index))
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      handleFiles(Array.from(e.target.files))
+    }
+  }
+
+  const removeFile = (id: string) => {
+    setUploadedFiles((prev) => prev.filter((file) => file.id !== id))
+  }
+
+  const updateFileType = (id: string, type: "exterior" | "interior" | "other") => {
+    setUploadedFiles((prev) => prev.map((file) => (file.id === id ? { ...file, type } : file)))
   }
 
   const handleNext = () => {
-    updateData({ images: uploadedImages })
-    nextStep()
-  }
-
-  if (!data) {
-    return <div>Loading...</div>
+    updateData({
+      uploaded_photos: uploadedFiles.map((file) => ({
+        name: file.file.name,
+        type: file.type,
+        size: file.file.size,
+      })),
+    })
+    onNext()
   }
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold">Property Photos</h2>
-        <p className="text-muted-foreground mt-2">Upload high-quality photos to showcase your property</p>
-      </div>
-
+    <div className="max-w-2xl mx-auto">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Camera className="h-5 w-5" />
-            Photo Upload
+            Upload Property Photos
           </CardTitle>
-          <CardDescription>Add photos that highlight the best features of your property</CardDescription>
+          <CardDescription>Add high-quality photos to showcase your property</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           {/* Upload Area */}
           <div
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
@@ -89,81 +113,95 @@ export function WizardMediaUpload() {
             onDragOver={handleDrag}
             onDrop={handleDrop}
           >
-            <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Upload Property Photos</h3>
-            <p className="text-muted-foreground mb-4">Drag and drop your images here, or click to browse</p>
+            <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-medium mb-2">Drag and drop your photos here</h3>
+            <p className="text-muted-foreground mb-4">or click to browse your files</p>
             <input
               type="file"
               multiple
               accept="image/*"
-              onChange={(e) => e.target.files && handleFiles(e.target.files)}
+              onChange={handleFileInput}
               className="hidden"
               id="file-upload"
             />
             <label htmlFor="file-upload">
               <Button variant="outline" className="cursor-pointer bg-transparent">
                 <ImageIcon className="h-4 w-4 mr-2" />
-                Choose Files
+                Choose Photos
               </Button>
             </label>
+            <p className="text-xs text-muted-foreground mt-2">Supports JPG, PNG, WebP up to 10MB each</p>
           </div>
 
-          {/* Photo Tips */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-              <div>
-                <h4 className="font-medium text-blue-900 mb-1">Photo Tips</h4>
-                <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• Use high-resolution images (at least 1200px wide)</li>
-                  <li>• Include exterior shots, main living areas, and key features</li>
-                  <li>• Ensure good lighting and clean, staged spaces</li>
-                  <li>• Upload 5-15 photos for best results</li>
-                </ul>
+          {/* Uploaded Files */}
+          {uploadedFiles.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium">Uploaded Photos ({uploadedFiles.length})</h4>
+                <Badge variant="secondary">
+                  {uploadedFiles.length} photo{uploadedFiles.length !== 1 ? "s" : ""}
+                </Badge>
               </div>
-            </div>
-          </div>
 
-          {/* Uploaded Images */}
-          {uploadedImages.length > 0 && (
-            <div>
-              <h4 className="font-medium mb-3">Uploaded Photos ({uploadedImages.length})</h4>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {uploadedImages.map((image, index) => (
-                  <div key={index} className="relative group">
-                    <img
-                      src={image || "/placeholder.svg"}
-                      alt={`Property photo ${index + 1}`}
-                      className="w-full h-24 object-cover rounded-lg border"
-                    />
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {uploadedFiles.map((file) => (
+                  <div key={file.id} className="relative group">
+                    <div className="aspect-square rounded-lg overflow-hidden bg-muted">
+                      <img
+                        src={file.preview || "/placeholder.svg"}
+                        alt={file.file.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    {/* Remove Button */}
                     <button
-                      onClick={() => removeImage(index)}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => removeFile(file.id)}
+                      className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <X className="h-3 w-3" />
                     </button>
+
+                    {/* Type Selector */}
+                    <div className="mt-2 space-y-1">
+                      <p className="text-xs font-medium truncate">{file.file.name}</p>
+                      <select
+                        value={file.type}
+                        onChange={(e) => updateFileType(file.id, e.target.value as any)}
+                        className="w-full text-xs border rounded px-2 py-1"
+                      >
+                        <option value="other">General</option>
+                        <option value="exterior">Exterior</option>
+                        <option value="interior">Interior</option>
+                      </select>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Skip Option */}
-          <div className="text-center pt-4 border-t">
-            <p className="text-sm text-muted-foreground mb-2">Don't have photos ready? You can add them later.</p>
-            <Badge variant="outline">Optional Step</Badge>
+          {/* Tips */}
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+            <h4 className="font-medium text-amber-900 mb-2">📸 Photo Tips</h4>
+            <ul className="text-sm text-amber-700 space-y-1">
+              <li>• Use natural lighting when possible</li>
+              <li>• Include both exterior and interior shots</li>
+              <li>• Highlight key features and selling points</li>
+              <li>• Ensure photos are high resolution and well-composed</li>
+            </ul>
+          </div>
+
+          <div className="flex justify-between pt-4">
+            <Button variant="outline" onClick={onPrevious}>
+              Previous
+            </Button>
+            <Button onClick={handleNext}>
+              {uploadedFiles.length > 0 ? "Next: Marketing Preferences" : "Skip Photos"}
+            </Button>
           </div>
         </CardContent>
       </Card>
-
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={prevStep}>
-          Back
-        </Button>
-        <Button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700">
-          Continue
-        </Button>
-      </div>
     </div>
   )
 }

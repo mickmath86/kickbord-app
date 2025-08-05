@@ -1,244 +1,225 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Home, MapPin, DollarSign, Bed, Bath, Square, Star, FileText, Download, Share, Eye } from "lucide-react"
-import { useCampaignData } from "@/components/campaign-wizard"
+import { CheckCircle, Download, Share2, Calendar, MapPin, DollarSign, Home, Camera } from "lucide-react"
+import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
 
-export function WizardFinalPreview() {
-  const { data, prevStep } = useCampaignData()
+interface WizardFinalPreviewProps {
+  onNext: () => void
+  onPrevious: () => void
+  onClose: () => void
+  isFirstStep: boolean
+  isLastStep: boolean
+}
+
+export function WizardFinalPreview({ onNext, onPrevious }: WizardFinalPreviewProps) {
+  const { data } = useCampaignData()
   const [isCreating, setIsCreating] = useState(false)
-
-  if (!data) {
-    return <div>Loading...</div>
-  }
 
   const handleCreateCampaign = async () => {
     setIsCreating(true)
-
-    // In real app, save campaign to database
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      // Redirect to campaign page or close wizard
-      console.log("Campaign created successfully!")
-    } catch (error) {
-      console.error("Error creating campaign:", error)
-    } finally {
+    // Simulate campaign creation
+    setTimeout(() => {
       setIsCreating(false)
-    }
+      onNext()
+    }, 2000)
   }
 
-  const selectedMaterials = data.marketing_materials || []
-  const features = data.features || []
-  const keywords = data.keywords || []
+  if (!data) {
+    return <div>Loading campaign preview...</div>
+  }
+
+  const generatedCopy = data.generated_copy || {}
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold">Campaign Preview</h2>
-        <p className="text-muted-foreground mt-2">Review your complete campaign before launching</p>
-      </div>
-
-      <div className="grid gap-6">
-        {/* Property Summary */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Home className="h-5 w-5" />
-              Property Summary
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-start gap-3">
-              <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
-              <div>
-                <p className="font-medium">{data.property_address}</p>
-                <p className="text-sm text-muted-foreground">Property Address</p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-green-600" />
-                <div>
-                  <p className="font-semibold">${data.price?.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">Price</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Bed className="h-4 w-4 text-blue-600" />
-                <div>
-                  <p className="font-semibold">{data.bedrooms}</p>
-                  <p className="text-xs text-muted-foreground">Bedrooms</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Bath className="h-4 w-4 text-purple-600" />
-                <div>
-                  <p className="font-semibold">{data.bathrooms}</p>
-                  <p className="text-xs text-muted-foreground">Bathrooms</p>
-                </div>
-              </div>
-              {data.square_feet && (
+    <div className="max-w-4xl mx-auto">
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="flex items-center justify-center gap-2">
+            <CheckCircle className="h-6 w-6 text-green-600" />
+            Campaign Ready for Launch
+          </CardTitle>
+          <CardDescription>Review your complete marketing campaign before we create it</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-8">
+          {/* Campaign Overview */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Home className="h-5 w-5" />
+                  Property Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
                 <div className="flex items-center gap-2">
-                  <Square className="h-4 w-4 text-orange-600" />
-                  <div>
-                    <p className="font-semibold">{data.square_feet?.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">Sq Ft</p>
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    {data.address}, {data.city}, {data.state} {data.zip_code}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">${data.price?.toLocaleString()}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Home className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    {data.bedrooms} bed • {data.bathrooms} bath • {data.property_type}
+                  </span>
+                </div>
+                {data.square_footage && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm">{data.square_footage.toLocaleString()} sq ft</span>
+                  </div>
+                )}
+                {data.uploaded_photos && data.uploaded_photos.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Camera className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm">{data.uploaded_photos.length} photos uploaded</span>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Marketing Materials</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
+                  {data.materials_to_generate?.map((material) => (
+                    <Badge key={material} variant="secondary" className="justify-center">
+                      {material.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}
+                    </Badge>
+                  ))}
+                </div>
+                <Separator />
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Design Style:</span>
+                    <span className="font-medium capitalize">{data.design_style}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Content Tone:</span>
+                    <span className="font-medium capitalize">{data.content_tone}</span>
                   </div>
                 </div>
-              )}
-            </div>
+              </CardContent>
+            </Card>
+          </div>
 
-            {features.length > 0 && (
-              <div>
-                <p className="text-sm font-medium mb-2 flex items-center gap-2">
-                  <Star className="h-4 w-4" />
-                  Key Features
-                </p>
+          {/* Key Features */}
+          {data.key_features && data.key_features.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Key Features</CardTitle>
+              </CardHeader>
+              <CardContent>
                 <div className="flex flex-wrap gap-2">
-                  {features.map((feature) => (
-                    <Badge key={feature} variant="secondary">
+                  {data.key_features.map((feature) => (
+                    <Badge key={feature} variant="outline">
                       {feature}
                     </Badge>
                   ))}
                 </div>
-              </div>
-            )}
+              </CardContent>
+            </Card>
+          )}
 
-            {keywords.length > 0 && (
-              <div>
-                <p className="text-sm font-medium mb-2">Marketing Keywords</p>
-                <div className="flex flex-wrap gap-2">
-                  {keywords.map((keyword) => (
-                    <Badge key={keyword} variant="outline">
-                      {keyword}
-                    </Badge>
-                  ))}
+          {/* Generated Content Preview */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Generated Content Preview</CardTitle>
+              <CardDescription>Sample of your marketing materials</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Social Media Post */}
+              {generatedCopy.social_posts && generatedCopy.social_posts[0] && (
+                <div>
+                  <h4 className="font-medium mb-2">Social Media Post</h4>
+                  <div className="bg-muted p-4 rounded-lg text-sm">{generatedCopy.social_posts[0]}</div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {data.notes && (
-              <div>
-                <p className="text-sm font-medium mb-2">Additional Notes</p>
-                <p className="text-sm text-muted-foreground bg-muted p-3 rounded-lg">{data.notes}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              {/* Email Subject */}
+              {generatedCopy.email_subject && (
+                <div>
+                  <h4 className="font-medium mb-2">Email Campaign Subject</h4>
+                  <div className="bg-muted p-3 rounded-lg text-sm font-medium">{generatedCopy.email_subject}</div>
+                </div>
+              )}
 
-        {/* Marketing Materials */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Marketing Materials
-            </CardTitle>
-            <CardDescription>{selectedMaterials.length} materials will be generated</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3">
-              {selectedMaterials.map((materialId) => {
-                const materialNames: { [key: string]: string } = {
-                  social_media: "Social Media Posts",
-                  listing_description: "MLS Listing Description",
-                  flyer: "Property Flyer",
-                  email_template: "Email Template",
-                  landing_page: "Landing Page Copy",
-                }
-
-                return (
-                  <div key={materialId} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-4 w-4 text-blue-600" />
-                      <span className="font-medium">{materialNames[materialId]}</span>
-                    </div>
-                    <Badge variant="secondary">Ready</Badge>
+              {/* Landing Page Headline */}
+              {generatedCopy.landing_page_headline && (
+                <div>
+                  <h4 className="font-medium mb-2">Landing Page Headline</h4>
+                  <div className="bg-muted p-4 rounded-lg">
+                    <h3 className="text-lg font-bold">{generatedCopy.landing_page_headline}</h3>
+                    {generatedCopy.landing_page_subheading && (
+                      <p className="text-sm text-muted-foreground mt-2">{generatedCopy.landing_page_subheading}</p>
+                    )}
                   </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Style & Preferences */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Style & Preferences</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium mb-1">Visual Style</p>
-                <Badge variant="outline" className="capitalize">
-                  {data.style}
-                </Badge>
-              </div>
-              <div>
-                <p className="text-sm font-medium mb-1">Content Tone</p>
-                <Badge variant="outline" className="capitalize">
-                  {data.tone}
-                </Badge>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Campaign Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle>What's Next?</CardTitle>
-            <CardDescription>Once created, you'll be able to download, share, and track your campaign</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-3 gap-4">
-              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                <Download className="h-5 w-5 text-blue-600" />
-                <div>
-                  <p className="font-medium text-sm">Download Materials</p>
-                  <p className="text-xs text-muted-foreground">Get all files ready to use</p>
                 </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                <Share className="h-5 w-5 text-green-600" />
-                <div>
-                  <p className="font-medium text-sm">Share Campaign</p>
-                  <p className="text-xs text-muted-foreground">Send to clients and team</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                <Eye className="h-5 w-5 text-purple-600" />
-                <div>
-                  <p className="font-medium text-sm">Track Performance</p>
-                  <p className="text-xs text-muted-foreground">Monitor views and leads</p>
-                </div>
-              </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Campaign Stats */}
+          <div className="grid grid-cols-3 gap-4 text-center">
+            <div className="space-y-1">
+              <div className="text-2xl font-bold text-blue-600">{data.materials_to_generate?.length || 0}</div>
+              <div className="text-sm text-muted-foreground">Materials</div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <div className="space-y-1">
+              <div className="text-2xl font-bold text-green-600">{data.key_features?.length || 0}</div>
+              <div className="text-sm text-muted-foreground">Features</div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-2xl font-bold text-purple-600">{data.uploaded_photos?.length || 0}</div>
+              <div className="text-sm text-muted-foreground">Photos</div>
+            </div>
+          </div>
 
-      <Separator />
+          {/* Success Message */}
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center">
+            <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-green-900 mb-2">Your Campaign is Ready!</h3>
+            <p className="text-green-700 mb-4">
+              We've generated professional marketing materials tailored specifically for your property. Click "Create
+              Campaign" to save everything and start promoting your listing.
+            </p>
+            <div className="flex justify-center gap-2">
+              <Badge variant="secondary">
+                <Calendar className="h-3 w-3 mr-1" />
+                Ready to Launch
+              </Badge>
+              <Badge variant="secondary">
+                <Share2 className="h-3 w-3 mr-1" />
+                Multi-Platform
+              </Badge>
+              <Badge variant="secondary">
+                <Download className="h-3 w-3 mr-1" />
+                Downloadable
+              </Badge>
+            </div>
+          </div>
 
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={prevStep}>
-          Back to Edit
-        </Button>
-        <Button
-          onClick={handleCreateCampaign}
-          disabled={isCreating}
-          className="bg-green-600 hover:bg-green-700"
-          size="lg"
-        >
-          {isCreating ? "Creating Campaign..." : "Create Campaign"}
-        </Button>
-      </div>
+          {/* Action Buttons */}
+          <div className="flex justify-between pt-6 border-t">
+            <Button variant="outline" onClick={onPrevious}>
+              Previous: Edit Content
+            </Button>
+            <Button onClick={handleCreateCampaign} disabled={isCreating} className="bg-green-600 hover:bg-green-700">
+              {isCreating ? "Creating Campaign..." : "Create Campaign"}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

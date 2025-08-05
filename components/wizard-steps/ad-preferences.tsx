@@ -1,192 +1,199 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Badge } from "@/components/ui/badge"
-import { Palette, FileText, Megaphone } from "lucide-react"
-import { useCampaignData } from "@/components/campaign-wizard"
+import { Palette, Target, Megaphone } from "lucide-react"
+import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
+
+interface WizardAdPreferencesProps {
+  onNext: () => void
+  onPrevious: () => void
+  onClose: () => void
+  isFirstStep: boolean
+  isLastStep: boolean
+}
 
 const MARKETING_MATERIALS = [
-  { id: "social_media", label: "Social Media Posts", description: "Instagram, Facebook, Twitter ready content" },
-  { id: "listing_description", label: "Listing Description", description: "Professional MLS description" },
-  { id: "flyer", label: "Property Flyer", description: "Print-ready marketing flyer" },
-  { id: "email_template", label: "Email Template", description: "Client outreach template" },
-  { id: "landing_page", label: "Landing Page Copy", description: "Website content for the property" },
+  { id: "social_media_posts", label: "Social Media Posts", description: "Facebook, Instagram, Twitter posts" },
+  { id: "property_flyers", label: "Property Flyers", description: "Printable marketing flyers" },
+  { id: "email_campaigns", label: "Email Campaigns", description: "Professional email templates" },
+  { id: "landing_page", label: "Landing Page", description: "Dedicated property website" },
+  { id: "virtual_tour", label: "Virtual Tour", description: "Interactive property showcase" },
+  { id: "brochures", label: "Brochures", description: "Detailed property brochures" },
 ]
 
 const STYLE_OPTIONS = [
-  { id: "professional", label: "Professional", description: "Clean, formal, business-focused" },
-  { id: "luxury", label: "Luxury", description: "Elegant, sophisticated, high-end" },
-  { id: "modern", label: "Modern", description: "Contemporary, sleek, minimalist" },
-  { id: "warm", label: "Warm & Inviting", description: "Friendly, welcoming, family-focused" },
+  { id: "modern", label: "Modern & Clean", description: "Minimalist design with clean lines" },
+  { id: "luxury", label: "Luxury & Elegant", description: "Sophisticated and upscale feel" },
+  { id: "warm", label: "Warm & Inviting", description: "Cozy and welcoming atmosphere" },
+  { id: "professional", label: "Professional", description: "Business-focused and credible" },
 ]
 
 const TONE_OPTIONS = [
-  { id: "informative", label: "Informative", description: "Fact-focused, detailed, educational" },
-  { id: "persuasive", label: "Persuasive", description: "Compelling, action-oriented, sales-focused" },
-  { id: "emotional", label: "Emotional", description: "Story-driven, lifestyle-focused, aspirational" },
+  { id: "friendly", label: "Friendly & Approachable", description: "Casual and welcoming tone" },
+  { id: "professional", label: "Professional & Authoritative", description: "Expert and trustworthy" },
+  { id: "exciting", label: "Exciting & Energetic", description: "Dynamic and enthusiastic" },
+  { id: "sophisticated", label: "Sophisticated & Refined", description: "Elegant and polished" },
 ]
 
-export function WizardAdPreferences() {
-  const { data, updateData, nextStep, prevStep } = useCampaignData()
+export function WizardAdPreferences({ onNext, onPrevious }: WizardAdPreferencesProps) {
+  const { data, updateData } = useCampaignData()
+  const [selectedMaterials, setSelectedMaterials] = useState<string[]>(
+    data?.materials_to_generate || ["social_media_posts", "property_flyers", "email_campaigns"],
+  )
+  const [selectedStyle, setSelectedStyle] = useState(data?.design_style || "modern")
+  const [selectedTone, setSelectedTone] = useState(data?.content_tone || "professional")
 
-  if (!data) {
-    return <div>Loading...</div>
-  }
-
-  const selectedMaterials = data.marketing_materials || []
-  const selectedStyle = data.style || ""
-  const selectedTone = data.tone || ""
-
-  const toggleMaterial = (materialId: string) => {
-    const updated = selectedMaterials.includes(materialId)
-      ? selectedMaterials.filter((m) => m !== materialId)
-      : [...selectedMaterials, materialId]
-    updateData({ marketing_materials: updated })
+  const handleMaterialToggle = (materialId: string) => {
+    setSelectedMaterials((prev) =>
+      prev.includes(materialId) ? prev.filter((id) => id !== materialId) : [...prev, materialId],
+    )
   }
 
   const handleNext = () => {
-    if (selectedMaterials.length > 0 && selectedStyle && selectedTone) {
-      nextStep()
-    }
+    updateData({
+      materials_to_generate: selectedMaterials,
+      design_style: selectedStyle,
+      content_tone: selectedTone,
+    })
+    onNext()
   }
 
-  const canProceed = selectedMaterials.length > 0 && selectedStyle && selectedTone
-
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold">Marketing Preferences</h2>
-        <p className="text-muted-foreground mt-2">Choose what marketing materials to generate and set the style</p>
-      </div>
-
-      <div className="grid gap-6">
-        {/* Marketing Materials */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Megaphone className="h-5 w-5" />
-              Marketing Materials
-            </CardTitle>
-            <CardDescription>Select which marketing materials you'd like us to generate</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {MARKETING_MATERIALS.map((material) => (
-              <div
-                key={material.id}
-                className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <Checkbox
-                  id={material.id}
-                  checked={selectedMaterials.includes(material.id)}
-                  onCheckedChange={() => toggleMaterial(material.id)}
-                />
-                <div className="flex-1">
-                  <Label htmlFor={material.id} className="font-medium cursor-pointer">
-                    {material.label}
-                  </Label>
-                  <p className="text-sm text-muted-foreground mt-1">{material.description}</p>
-                </div>
+    <div className="max-w-2xl mx-auto">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Megaphone className="h-5 w-5" />
+            Marketing Preferences
+          </CardTitle>
+          <CardDescription>Customize your marketing materials and style preferences</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-8">
+          {/* Marketing Materials */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-base font-medium">Marketing Materials</Label>
+                <p className="text-sm text-muted-foreground">Choose what we should create for your campaign</p>
               </div>
-            ))}
-            {selectedMaterials.length > 0 && (
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm font-medium text-blue-900 mb-2">
-                  Selected Materials ({selectedMaterials.length}):
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {selectedMaterials.map((materialId) => {
-                    const material = MARKETING_MATERIALS.find((m) => m.id === materialId)
-                    return (
-                      <Badge key={materialId} variant="secondary">
-                        {material?.label}
-                      </Badge>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+              <Badge variant="secondary">{selectedMaterials.length} selected</Badge>
+            </div>
 
-        {/* Style Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Palette className="h-5 w-5" />
-              Visual Style
-            </CardTitle>
-            <CardDescription>Choose the overall style and aesthetic for your marketing materials</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup
-              value={selectedStyle}
-              onValueChange={(value) => updateData({ style: value })}
-              className="space-y-3"
-            >
-              {STYLE_OPTIONS.map((style) => (
+            <div className="grid gap-3">
+              {MARKETING_MATERIALS.map((material) => (
                 <div
-                  key={style.id}
-                  className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+                  key={material.id}
+                  className={`flex items-start space-x-3 p-4 border rounded-lg cursor-pointer transition-colors ${
+                    selectedMaterials.includes(material.id)
+                      ? "border-blue-500 bg-blue-50"
+                      : "border-border hover:bg-muted/50"
+                  }`}
+                  onClick={() => handleMaterialToggle(material.id)}
                 >
-                  <RadioGroupItem value={style.id} id={style.id} className="mt-1" />
+                  <Checkbox
+                    checked={selectedMaterials.includes(material.id)}
+                    onChange={() => handleMaterialToggle(material.id)}
+                    className="mt-0.5"
+                  />
                   <div className="flex-1">
-                    <Label htmlFor={style.id} className="font-medium cursor-pointer">
-                      {style.label}
-                    </Label>
-                    <p className="text-sm text-muted-foreground mt-1">{style.description}</p>
+                    <Label className="font-medium cursor-pointer">{material.label}</Label>
+                    <p className="text-sm text-muted-foreground">{material.description}</p>
                   </div>
                 </div>
               ))}
-            </RadioGroup>
-          </CardContent>
-        </Card>
+            </div>
+          </div>
 
-        {/* Tone Selection */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Content Tone
-            </CardTitle>
-            <CardDescription>Select the tone and approach for your marketing copy</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <RadioGroup
-              value={selectedTone}
-              onValueChange={(value) => updateData({ tone: value })}
-              className="space-y-3"
-            >
-              {TONE_OPTIONS.map((tone) => (
-                <div
-                  key={tone.id}
-                  className="flex items-start space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors"
-                >
-                  <RadioGroupItem value={tone.id} id={tone.id} className="mt-1" />
-                  <div className="flex-1">
-                    <Label htmlFor={tone.id} className="font-medium cursor-pointer">
-                      {tone.label}
-                    </Label>
-                    <p className="text-sm text-muted-foreground mt-1">{tone.description}</p>
+          {/* Design Style */}
+          <div className="space-y-4">
+            <div>
+              <Label className="text-base font-medium flex items-center gap-2">
+                <Palette className="h-4 w-4" />
+                Design Style
+              </Label>
+              <p className="text-sm text-muted-foreground">Choose the visual style for your marketing materials</p>
+            </div>
+
+            <RadioGroup value={selectedStyle} onValueChange={setSelectedStyle}>
+              <div className="grid gap-3">
+                {STYLE_OPTIONS.map((style) => (
+                  <div
+                    key={style.id}
+                    className={`flex items-start space-x-3 p-4 border rounded-lg cursor-pointer transition-colors ${
+                      selectedStyle === style.id ? "border-blue-500 bg-blue-50" : "border-border hover:bg-muted/50"
+                    }`}
+                  >
+                    <RadioGroupItem value={style.id} className="mt-0.5" />
+                    <div className="flex-1">
+                      <Label className="font-medium cursor-pointer">{style.label}</Label>
+                      <p className="text-sm text-muted-foreground">{style.description}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </RadioGroup>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
 
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={prevStep}>
-          Back
-        </Button>
-        <Button onClick={handleNext} disabled={!canProceed} className="bg-blue-600 hover:bg-blue-700">
-          Generate Campaign
-        </Button>
-      </div>
+          {/* Content Tone */}
+          <div className="space-y-4">
+            <div>
+              <Label className="text-base font-medium flex items-center gap-2">
+                <Target className="h-4 w-4" />
+                Content Tone
+              </Label>
+              <p className="text-sm text-muted-foreground">Select the tone of voice for your marketing content</p>
+            </div>
+
+            <RadioGroup value={selectedTone} onValueChange={setSelectedTone}>
+              <div className="grid gap-3">
+                {TONE_OPTIONS.map((tone) => (
+                  <div
+                    key={tone.id}
+                    className={`flex items-start space-x-3 p-4 border rounded-lg cursor-pointer transition-colors ${
+                      selectedTone === tone.id ? "border-blue-500 bg-blue-50" : "border-border hover:bg-muted/50"
+                    }`}
+                  >
+                    <RadioGroupItem value={tone.id} className="mt-0.5" />
+                    <div className="flex-1">
+                      <Label className="font-medium cursor-pointer">{tone.label}</Label>
+                      <p className="text-sm text-muted-foreground">{tone.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </RadioGroup>
+          </div>
+
+          {/* Summary */}
+          <div className="bg-gray-50 border rounded-lg p-4">
+            <h4 className="font-medium mb-3">Campaign Summary</h4>
+            <div className="space-y-2 text-sm">
+              <div>
+                <span className="font-medium">Materials:</span> {selectedMaterials.length} items selected
+              </div>
+              <div>
+                <span className="font-medium">Style:</span> {STYLE_OPTIONS.find((s) => s.id === selectedStyle)?.label}
+              </div>
+              <div>
+                <span className="font-medium">Tone:</span> {TONE_OPTIONS.find((t) => t.id === selectedTone)?.label}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-between pt-4">
+            <Button variant="outline" onClick={onPrevious}>
+              Previous
+            </Button>
+            <Button onClick={handleNext}>Generate Campaign</Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

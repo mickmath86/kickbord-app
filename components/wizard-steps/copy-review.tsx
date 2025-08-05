@@ -1,163 +1,366 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { FileText, Edit, Check, RefreshCw } from "lucide-react"
-import { useCampaignData } from "@/components/campaign-wizard"
+import { Edit3, Eye } from "lucide-react"
+import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
 
-// Mock generated content - in real app this would come from AI generation
-const MOCK_CONTENT = {
-  social_media: {
-    title: "Social Media Post",
-    content:
-      "🏡 JUST LISTED! Stunning 3BR/2BA home in prime location! ✨\n\n💰 $750,000\n📍 Beautiful neighborhood\n🌟 Move-in ready with modern updates\n\n#JustListed #RealEstate #DreamHome #NewListing",
-  },
-  listing_description: {
-    title: "MLS Listing Description",
-    content:
-      "Welcome to this beautifully maintained 3-bedroom, 2-bathroom home featuring modern updates throughout. The open-concept living area flows seamlessly into the updated kitchen with stainless steel appliances. The master suite offers a private retreat with walk-in closet and en-suite bathroom. Additional highlights include hardwood floors, a cozy fireplace, and a private backyard perfect for entertaining. Located in a desirable neighborhood with easy access to schools, shopping, and dining. This move-in ready home won't last long!",
-  },
-  email_template: {
-    title: "Client Email Template",
-    content:
-      "Subject: New Listing Alert - Your Dream Home Awaits!\n\nHi [Client Name],\n\nI'm excited to share this incredible new listing that just hit the market! This stunning 3-bedroom, 2-bathroom home offers everything you've been looking for:\n\n• Modern updates throughout\n• Open-concept living space\n• Updated kitchen with stainless appliances\n• Private backyard for entertaining\n• Prime location near schools and amenities\n\nPriced at $750,000, this home is sure to generate significant interest. I'd love to schedule a private showing for you this week.\n\nLet me know your availability!\n\nBest regards,\n[Your Name]",
-  },
+interface WizardCopyReviewProps {
+  onNext: () => void
+  onPrevious: () => void
+  onClose: () => void
+  isFirstStep: boolean
+  isLastStep: boolean
 }
 
-export function WizardCopyReview() {
-  const { data, updateData, nextStep, prevStep } = useCampaignData()
-  const [editingContent, setEditingContent] = useState<{ [key: string]: string }>({})
-  const [activeTab, setActiveTab] = useState("social_media")
+export function WizardCopyReview({ onNext, onPrevious }: WizardCopyReviewProps) {
+  const { data, updateData } = useCampaignData()
+  const [editingContent, setEditingContent] = useState<string | null>(null)
+  const [editedContent, setEditedContent] = useState("")
 
-  if (!data) {
-    return <div>Loading...</div>
+  const generatedCopy = data?.generated_copy || {}
+
+  const handleEdit = (contentKey: string, currentContent: string) => {
+    setEditingContent(contentKey)
+    setEditedContent(currentContent)
   }
 
-  const selectedMaterials = data.marketing_materials || []
-  const availableContent = Object.entries(MOCK_CONTENT).filter(([key]) => selectedMaterials.includes(key))
-
-  const handleEdit = (contentType: string, newContent: string) => {
-    setEditingContent((prev) => ({
-      ...prev,
-      [contentType]: newContent,
-    }))
+  const handleSaveEdit = () => {
+    if (editingContent) {
+      updateData({
+        generated_copy: {
+          ...generatedCopy,
+          [editingContent]: editedContent,
+        },
+      })
+      setEditingContent(null)
+      setEditedContent("")
+    }
   }
 
-  const handleSave = (contentType: string) => {
-    // In real app, save the edited content
-    setEditingContent((prev) => {
-      const updated = { ...prev }
-      delete updated[contentType]
-      return updated
-    })
-  }
-
-  const handleRegenerate = (contentType: string) => {
-    // In real app, trigger AI regeneration
-    console.log(`Regenerating content for ${contentType}`)
+  const handleCancelEdit = () => {
+    setEditingContent(null)
+    setEditedContent("")
   }
 
   const handleNext = () => {
-    // Save any edited content to campaign data
-    updateData({ generated_content: { ...MOCK_CONTENT, ...editingContent } })
-    nextStep()
+    onNext()
   }
 
-  const isEditing = (contentType: string) => contentType in editingContent
+  if (!data || !generatedCopy) {
+    return <div>Loading generated content...</div>
+  }
 
   return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold">Review & Edit Content</h2>
-        <p className="text-muted-foreground mt-2">Review the generated marketing content and make any adjustments</p>
-      </div>
-
+    <div className="max-w-4xl mx-auto">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Generated Marketing Content
+            <Edit3 className="h-5 w-5" />
+            Review & Edit Your Marketing Copy
           </CardTitle>
-          <CardDescription>Click edit to modify any content, or regenerate for new versions</CardDescription>
+          <CardDescription>
+            Review the generated content and make any adjustments before finalizing your campaign
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3">
-              {availableContent.map(([key, content]) => (
-                <TabsTrigger key={key} value={key} className="text-xs">
-                  {content.title}
-                </TabsTrigger>
-              ))}
+        <CardContent className="space-y-6">
+          <Tabs defaultValue="social" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="social">Social Media</TabsTrigger>
+              <TabsTrigger value="description">Property Description</TabsTrigger>
+              <TabsTrigger value="email">Email Campaign</TabsTrigger>
+              <TabsTrigger value="landing">Landing Page</TabsTrigger>
             </TabsList>
 
-            {availableContent.map(([contentType, content]) => (
-              <TabsContent key={contentType} value={contentType} className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">{content.title}</h3>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => handleRegenerate(contentType)}>
-                      <RefreshCw className="h-4 w-4 mr-1" />
-                      Regenerate
-                    </Button>
-                    {!isEditing(contentType) ? (
-                      <Button variant="outline" size="sm" onClick={() => handleEdit(contentType, content.content)}>
-                        <Edit className="h-4 w-4 mr-1" />
-                        Edit
+            {/* Social Media Posts */}
+            <TabsContent value="social" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Social Media Posts</h3>
+                <Badge variant="secondary">{generatedCopy.social_posts?.length || 0} posts</Badge>
+              </div>
+
+              {generatedCopy.social_posts?.map((post: string, index: number) => (
+                <Card key={index}>
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <Label className="text-sm font-medium">Post {index + 1}</Label>
+                        {editingContent === `social_posts_${index}` ? (
+                          <div className="mt-2 space-y-3">
+                            <Textarea
+                              value={editedContent}
+                              onChange={(e) => setEditedContent(e.target.value)}
+                              rows={4}
+                              className="w-full"
+                            />
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={handleSaveEdit}>
+                                Save
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="mt-2">
+                            <p className="text-sm bg-muted p-3 rounded-md">{post}</p>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="mt-2"
+                              onClick={() => handleEdit(`social_posts_${index}`, post)}
+                            >
+                              <Edit3 className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </TabsContent>
+
+            {/* Property Description */}
+            <TabsContent value="description" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Property Description</h3>
+                <Badge variant="secondary">Marketing Copy</Badge>
+              </div>
+
+              <Card>
+                <CardContent className="p-4">
+                  {editingContent === "property_description" ? (
+                    <div className="space-y-3">
+                      <Label>Property Description</Label>
+                      <Textarea
+                        value={editedContent}
+                        onChange={(e) => setEditedContent(e.target.value)}
+                        rows={6}
+                        className="w-full"
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={handleSaveEdit}>
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <Label>Property Description</Label>
+                      <p className="text-sm bg-muted p-4 rounded-md leading-relaxed">
+                        {generatedCopy.property_description}
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleEdit("property_description", generatedCopy.property_description)}
+                      >
+                        <Edit3 className="h-4 w-4 mr-1" />
+                        Edit Description
                       </Button>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Email Campaign */}
+            <TabsContent value="email" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Email Campaign</h3>
+                <Badge variant="secondary">Professional Template</Badge>
+              </div>
+
+              <div className="grid gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    {editingContent === "email_subject" ? (
+                      <div className="space-y-3">
+                        <Label>Email Subject Line</Label>
+                        <input
+                          type="text"
+                          value={editedContent}
+                          onChange={(e) => setEditedContent(e.target.value)}
+                          className="w-full px-3 py-2 border rounded-md"
+                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={handleSaveEdit}>
+                            Save
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
                     ) : (
-                      <Button variant="outline" size="sm" onClick={() => handleSave(contentType)}>
-                        <Check className="h-4 w-4 mr-1" />
-                        Save
-                      </Button>
+                      <div className="space-y-3">
+                        <Label>Email Subject Line</Label>
+                        <p className="text-sm bg-muted p-3 rounded-md font-medium">{generatedCopy.email_subject}</p>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEdit("email_subject", generatedCopy.email_subject)}
+                        >
+                          <Edit3 className="h-4 w-4 mr-1" />
+                          Edit Subject
+                        </Button>
+                      </div>
                     )}
-                  </div>
-                </div>
+                  </CardContent>
+                </Card>
 
-                {isEditing(contentType) ? (
-                  <Textarea
-                    value={editingContent[contentType]}
-                    onChange={(e) => handleEdit(contentType, e.target.value)}
-                    rows={8}
-                    className="font-mono text-sm"
-                  />
-                ) : (
-                  <div className="bg-muted rounded-lg p-4">
-                    <pre className="whitespace-pre-wrap text-sm">{content.content}</pre>
-                  </div>
-                )}
+                <Card>
+                  <CardContent className="p-4">
+                    {editingContent === "email_body" ? (
+                      <div className="space-y-3">
+                        <Label>Email Body</Label>
+                        <Textarea
+                          value={editedContent}
+                          onChange={(e) => setEditedContent(e.target.value)}
+                          rows={6}
+                          className="w-full"
+                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={handleSaveEdit}>
+                            Save
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <Label>Email Body</Label>
+                        <p className="text-sm bg-muted p-4 rounded-md leading-relaxed">{generatedCopy.email_body}</p>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEdit("email_body", generatedCopy.email_body)}
+                        >
+                          <Edit3 className="h-4 w-4 mr-1" />
+                          Edit Body
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
 
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary">{content.content.length} characters</Badge>
-                  <Badge variant="outline">Ready to use</Badge>
-                </div>
-              </TabsContent>
-            ))}
+            {/* Landing Page */}
+            <TabsContent value="landing" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Landing Page Content</h3>
+                <Badge variant="secondary">Web Copy</Badge>
+              </div>
+
+              <div className="grid gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    {editingContent === "landing_page_headline" ? (
+                      <div className="space-y-3">
+                        <Label>Main Headline</Label>
+                        <input
+                          type="text"
+                          value={editedContent}
+                          onChange={(e) => setEditedContent(e.target.value)}
+                          className="w-full px-3 py-2 border rounded-md"
+                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={handleSaveEdit}>
+                            Save
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <Label>Main Headline</Label>
+                        <p className="text-lg font-semibold bg-muted p-3 rounded-md">
+                          {generatedCopy.landing_page_headline}
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEdit("landing_page_headline", generatedCopy.landing_page_headline)}
+                        >
+                          <Edit3 className="h-4 w-4 mr-1" />
+                          Edit Headline
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardContent className="p-4">
+                    {editingContent === "landing_page_subheading" ? (
+                      <div className="space-y-3">
+                        <Label>Subheading</Label>
+                        <Textarea
+                          value={editedContent}
+                          onChange={(e) => setEditedContent(e.target.value)}
+                          rows={3}
+                          className="w-full"
+                        />
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={handleSaveEdit}>
+                            Save
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        <Label>Subheading</Label>
+                        <p className="text-sm bg-muted p-3 rounded-md">{generatedCopy.landing_page_subheading}</p>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleEdit("landing_page_subheading", generatedCopy.landing_page_subheading)}
+                        >
+                          <Edit3 className="h-4 w-4 mr-1" />
+                          Edit Subheading
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </TabsContent>
           </Tabs>
+
+          {/* Action Buttons */}
+          <div className="flex justify-between pt-6 border-t">
+            <Button variant="outline" onClick={onPrevious}>
+              Previous
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline">
+                <Eye className="h-4 w-4 mr-2" />
+                Preview All
+              </Button>
+              <Button onClick={handleNext}>Next: Final Review</Button>
+            </div>
+          </div>
         </CardContent>
       </Card>
-
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h4 className="font-medium text-blue-900 mb-2">Content Tips</h4>
-        <ul className="text-sm text-blue-800 space-y-1">
-          <li>• Review for accuracy and brand voice consistency</li>
-          <li>• Customize with specific details about your market</li>
-          <li>• Add your contact information where needed</li>
-          <li>• Test different versions to see what performs best</li>
-        </ul>
-      </div>
-
-      <div className="flex justify-between">
-        <Button variant="outline" onClick={prevStep}>
-          Back
-        </Button>
-        <Button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700">
-          Approve Content
-        </Button>
-      </div>
     </div>
   )
 }
