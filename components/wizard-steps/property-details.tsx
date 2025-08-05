@@ -1,189 +1,178 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { X, Plus, Sparkles } from "lucide-react"
-import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
+import { Star, Plus, X } from "lucide-react"
+import { useCampaignData } from "@/components/campaign-wizard"
+import { useState } from "react"
 
-interface WizardPropertyDetailsProps {
-  onNext: () => void
-  onPrevious: () => void
-  onClose: () => void
-  isFirstStep: boolean
-  isLastStep: boolean
-}
-
-const SUGGESTED_FEATURES = [
-  "Updated Kitchen",
-  "Hardwood Floors",
-  "Granite Countertops",
-  "Stainless Steel Appliances",
-  "Walk-in Closet",
-  "Master Suite",
-  "Fireplace",
-  "Deck/Patio",
-  "Garage",
+const COMMON_FEATURES = [
   "Pool",
+  "Garage",
+  "Fireplace",
+  "Hardwood Floors",
+  "Updated Kitchen",
+  "Master Suite",
+  "Walk-in Closet",
+  "Patio/Deck",
   "Garden",
-  "High Ceilings",
-  "Open Floor Plan",
-  "Recently Renovated",
+  "Mountain View",
+  "Ocean View",
+  "City View",
+  "Gourmet Kitchen",
+  "Wine Cellar",
+  "Home Office",
+  "Gym/Fitness Room",
+  "Guest House",
+  "Solar Panels",
+  "Smart Home",
+  "Security System",
 ]
 
-export function WizardPropertyDetails({ onNext, onPrevious, isFirstStep }: WizardPropertyDetailsProps) {
-  const { data, updateData } = useCampaignData()
-  const [newFeature, setNewFeature] = useState("")
+export function WizardPropertyDetails() {
+  const { data, updateData, nextStep, prevStep } = useCampaignData()
   const [newKeyword, setNewKeyword] = useState("")
 
-  // Add null check for data
   if (!data) {
     return <div>Loading...</div>
   }
 
-  const addFeature = (feature: string) => {
-    if (feature.trim() && !data.key_features.includes(feature.trim())) {
-      updateData({ key_features: [...data.key_features, feature.trim()] })
-      setNewFeature("")
-    }
+  const features = data.features || []
+  const keywords = data.keywords || []
+
+  const toggleFeature = (feature: string) => {
+    const currentFeatures = features || []
+    const updatedFeatures = currentFeatures.includes(feature)
+      ? currentFeatures.filter((f) => f !== feature)
+      : [...currentFeatures, feature]
+    updateData({ features: updatedFeatures })
   }
 
-  const removeFeature = (feature: string) => {
-    updateData({ key_features: data.key_features.filter((f) => f !== feature) })
-  }
-
-  const addKeyword = (keyword: string) => {
-    if (keyword.trim() && !data.keywords.includes(keyword.trim())) {
-      updateData({ keywords: [...data.keywords, keyword.trim()] })
+  const addKeyword = () => {
+    if (newKeyword.trim() && !keywords.includes(newKeyword.trim())) {
+      updateData({ keywords: [...keywords, newKeyword.trim()] })
       setNewKeyword("")
     }
   }
 
   const removeKeyword = (keyword: string) => {
-    updateData({ keywords: data.keywords.filter((k) => k !== keyword) })
+    updateData({ keywords: keywords.filter((k) => k !== keyword) })
+  }
+
+  const handleNext = () => {
+    nextStep()
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Sparkles className="h-5 w-5" />
-            <span>Property Details</span>
-          </CardTitle>
-          <CardDescription>Add features and details that make your property special</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Key Features */}
-          <div className="space-y-3">
-            <Label>Key Features</Label>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {data.key_features.map((feature, index) => (
-                <Badge key={index} variant="secondary" className="flex items-center gap-1">
-                  {feature}
-                  <X className="h-3 w-3 cursor-pointer hover:text-red-500" onClick={() => removeFeature(feature)} />
-                </Badge>
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold">Property Details</h2>
+        <p className="text-muted-foreground mt-2">Add features and details that make this property special</p>
+      </div>
+
+      <div className="grid gap-6">
+        {/* Key Features */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5" />
+              Key Features
+            </CardTitle>
+            <CardDescription>Select the standout features of this property</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {COMMON_FEATURES.map((feature) => (
+                <div key={feature} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={feature}
+                    checked={features.includes(feature)}
+                    onCheckedChange={() => toggleFeature(feature)}
+                  />
+                  <Label htmlFor={feature} className="text-sm font-normal cursor-pointer">
+                    {feature}
+                  </Label>
+                </div>
               ))}
             </div>
-
-            <div className="flex gap-2">
-              <Input
-                placeholder="Add a key feature..."
-                value={newFeature}
-                onChange={(e) => setNewFeature(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && addFeature(newFeature)}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => addFeature(newFeature)}
-                disabled={!newFeature.trim()}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Suggested Features */}
-            <div className="space-y-2">
-              <Label className="text-sm text-muted-foreground">Suggested features:</Label>
-              <div className="flex flex-wrap gap-2">
-                {SUGGESTED_FEATURES.filter((feature) => !data.key_features.includes(feature))
-                  .slice(0, 8)
-                  .map((feature) => (
-                    <Button
-                      key={feature}
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addFeature(feature)}
-                      className="text-xs"
-                    >
-                      + {feature}
-                    </Button>
+            {features.length > 0 && (
+              <div className="mt-4 p-3 bg-muted rounded-lg">
+                <p className="text-sm font-medium mb-2">Selected Features:</p>
+                <div className="flex flex-wrap gap-2">
+                  {features.map((feature) => (
+                    <Badge key={feature} variant="secondary">
+                      {feature}
+                    </Badge>
                   ))}
+                </div>
               </div>
-            </div>
-          </div>
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Keywords */}
-          <div className="space-y-3">
-            <Label>Marketing Keywords</Label>
-            <p className="text-sm text-muted-foreground">
-              Add keywords that describe your property's appeal (e.g., "luxury", "cozy", "modern")
-            </p>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {data.keywords.map((keyword, index) => (
-                <Badge key={index} variant="outline" className="flex items-center gap-1">
-                  {keyword}
-                  <X className="h-3 w-3 cursor-pointer hover:text-red-500" onClick={() => removeKeyword(keyword)} />
-                </Badge>
-              ))}
-            </div>
-
+        {/* Custom Keywords */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Marketing Keywords</CardTitle>
+            <CardDescription>Add specific words or phrases you want emphasized in the marketing copy</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
             <div className="flex gap-2">
               <Input
-                placeholder="Add a keyword..."
+                placeholder="e.g., luxury, modern, spacious"
                 value={newKeyword}
                 onChange={(e) => setNewKeyword(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && addKeyword(newKeyword)}
+                onKeyPress={(e) => e.key === "Enter" && addKeyword()}
               />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => addKeyword(newKeyword)}
-                disabled={!newKeyword.trim()}
-              >
+              <Button onClick={addKeyword} size="sm">
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
-          </div>
+            {keywords.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {keywords.map((keyword) => (
+                  <Badge key={keyword} variant="outline" className="pr-1">
+                    {keyword}
+                    <button onClick={() => removeKeyword(keyword)} className="ml-1 hover:bg-muted rounded-full p-0.5">
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Additional Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="additional_notes">Additional Notes</Label>
+        {/* Additional Notes */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Additional Notes</CardTitle>
+            <CardDescription>Any special details, recent updates, or unique selling points</CardDescription>
+          </CardHeader>
+          <CardContent>
             <Textarea
-              id="additional_notes"
-              placeholder="Any additional details about the property, neighborhood, or special selling points..."
-              value={data.additional_notes || ""}
-              onChange={(e) => updateData({ additional_notes: e.target.value })}
+              placeholder="e.g., Recently renovated kitchen, quiet neighborhood, close to schools..."
+              value={data.notes || ""}
+              onChange={(e) => updateData({ notes: e.target.value })}
               rows={4}
             />
-          </div>
+          </CardContent>
+        </Card>
+      </div>
 
-          <div className="flex justify-between pt-6">
-            <Button variant="outline" onClick={onPrevious} disabled={isFirstStep}>
-              Previous
-            </Button>
-            <Button onClick={onNext}>Next</Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={prevStep}>
+          Back
+        </Button>
+        <Button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700">
+          Continue
+        </Button>
+      </div>
     </div>
   )
 }

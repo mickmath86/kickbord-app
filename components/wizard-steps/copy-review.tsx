@@ -3,196 +3,160 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { ThumbsUp, ThumbsDown, Edit, Copy, Check } from "lucide-react"
-import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { FileText, Edit, Check, RefreshCw } from "lucide-react"
+import { useCampaignData } from "@/components/campaign-wizard"
 
-interface WizardCopyReviewProps {
-  onNext: () => void
-  onPrevious: () => void
-  onClose: () => void
-  isFirstStep: boolean
-  isLastStep: boolean
+// Mock generated content - in real app this would come from AI generation
+const MOCK_CONTENT = {
+  social_media: {
+    title: "Social Media Post",
+    content:
+      "🏡 JUST LISTED! Stunning 3BR/2BA home in prime location! ✨\n\n💰 $750,000\n📍 Beautiful neighborhood\n🌟 Move-in ready with modern updates\n\n#JustListed #RealEstate #DreamHome #NewListing",
+  },
+  listing_description: {
+    title: "MLS Listing Description",
+    content:
+      "Welcome to this beautifully maintained 3-bedroom, 2-bathroom home featuring modern updates throughout. The open-concept living area flows seamlessly into the updated kitchen with stainless steel appliances. The master suite offers a private retreat with walk-in closet and en-suite bathroom. Additional highlights include hardwood floors, a cozy fireplace, and a private backyard perfect for entertaining. Located in a desirable neighborhood with easy access to schools, shopping, and dining. This move-in ready home won't last long!",
+  },
+  email_template: {
+    title: "Client Email Template",
+    content:
+      "Subject: New Listing Alert - Your Dream Home Awaits!\n\nHi [Client Name],\n\nI'm excited to share this incredible new listing that just hit the market! This stunning 3-bedroom, 2-bathroom home offers everything you've been looking for:\n\n• Modern updates throughout\n• Open-concept living space\n• Updated kitchen with stainless appliances\n• Private backyard for entertaining\n• Prime location near schools and amenities\n\nPriced at $750,000, this home is sure to generate significant interest. I'd love to schedule a private showing for you this week.\n\nLet me know your availability!\n\nBest regards,\n[Your Name]",
+  },
 }
 
-export function WizardCopyReview({ onNext, onPrevious, isFirstStep }: WizardCopyReviewProps) {
-  const { data, updateData } = useCampaignData()
-  const [editingItem, setEditingItem] = useState<string | null>(null)
-  const [copiedItem, setCopiedItem] = useState<string | null>(null)
+export function WizardCopyReview() {
+  const { data, updateData, nextStep, prevStep } = useCampaignData()
+  const [editingContent, setEditingContent] = useState<{ [key: string]: string }>({})
+  const [activeTab, setActiveTab] = useState("social_media")
 
-  // Add null check for data
   if (!data) {
     return <div>Loading...</div>
   }
 
-  const handleFeedback = (itemType: string, itemIndex: number, feedback: "like" | "dislike") => {
-    const currentFeedback = data.feedback || {}
-    const key = `${itemType}_${itemIndex}`
-    updateData({
-      feedback: {
-        ...currentFeedback,
-        [key]: feedback,
-      },
+  const selectedMaterials = data.marketing_materials || []
+  const availableContent = Object.entries(MOCK_CONTENT).filter(([key]) => selectedMaterials.includes(key))
+
+  const handleEdit = (contentType: string, newContent: string) => {
+    setEditingContent((prev) => ({
+      ...prev,
+      [contentType]: newContent,
+    }))
+  }
+
+  const handleSave = (contentType: string) => {
+    // In real app, save the edited content
+    setEditingContent((prev) => {
+      const updated = { ...prev }
+      delete updated[contentType]
+      return updated
     })
   }
 
-  const handleEdit = (itemType: string, itemIndex: number, newContent: string) => {
-    const currentSelected = data.selected_copy || {}
-    updateData({
-      selected_copy: {
-        ...currentSelected,
-        [`${itemType}_${itemIndex}`]: newContent,
-      },
-    })
-    setEditingItem(null)
+  const handleRegenerate = (contentType: string) => {
+    // In real app, trigger AI regeneration
+    console.log(`Regenerating content for ${contentType}`)
   }
 
-  const copyToClipboard = (text: string, itemKey: string) => {
-    navigator.clipboard.writeText(text)
-    setCopiedItem(itemKey)
-    setTimeout(() => setCopiedItem(null), 2000)
+  const handleNext = () => {
+    // Save any edited content to campaign data
+    updateData({ generated_content: { ...MOCK_CONTENT, ...editingContent } })
+    nextStep()
   }
 
-  const getContent = (itemType: string, itemIndex: number, originalContent: string) => {
-    const key = `${itemType}_${itemIndex}`
-    return data.selected_copy?.[key] || originalContent
-  }
-
-  const renderContentItem = (content: string, itemType: string, itemIndex: number, title: string) => {
-    const itemKey = `${itemType}_${itemIndex}`
-    const isEditing = editingItem === itemKey
-    const feedback = data.feedback?.[itemKey]
-    const displayContent = getContent(itemType, itemIndex, content)
-
-    return (
-      <Card key={itemKey} className="mb-4">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">{title}</CardTitle>
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="sm" onClick={() => copyToClipboard(displayContent, itemKey)}>
-                {copiedItem === itemKey ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setEditingItem(isEditing ? null : itemKey)}>
-                <Edit className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {isEditing ? (
-            <div className="space-y-3">
-              <Textarea
-                value={displayContent}
-                onChange={(e) => handleEdit(itemType, itemIndex, e.target.value)}
-                rows={6}
-                className="w-full"
-              />
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" size="sm" onClick={() => setEditingItem(null)}>
-                  Cancel
-                </Button>
-                <Button size="sm" onClick={() => setEditingItem(null)}>
-                  Save Changes
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <p className="whitespace-pre-wrap">{displayContent}</p>
-              </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-muted-foreground">How does this look?</span>
-                  <Button
-                    variant={feedback === "like" ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => handleFeedback(itemType, itemIndex, "like")}
-                  >
-                    <ThumbsUp className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={feedback === "dislike" ? "destructive" : "outline"}
-                    size="sm"
-                    onClick={() => handleFeedback(itemType, itemIndex, "dislike")}
-                  >
-                    <ThumbsDown className="h-4 w-4" />
-                  </Button>
-                </div>
-                {feedback && (
-                  <Badge variant={feedback === "like" ? "default" : "destructive"}>
-                    {feedback === "like" ? "Approved" : "Needs Revision"}
-                  </Badge>
-                )}
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    )
-  }
+  const isEditing = (contentType: string) => contentType in editingContent
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <Card className="mb-6">
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold">Review & Edit Content</h2>
+        <p className="text-muted-foreground mt-2">Review the generated marketing content and make any adjustments</p>
+      </div>
+
+      <Card>
         <CardHeader>
-          <CardTitle>Review Your Marketing Materials</CardTitle>
-          <CardDescription>
-            Review, edit, and approve the generated content. You can make changes to any text before finalizing.
-          </CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Generated Marketing Content
+          </CardTitle>
+          <CardDescription>Click edit to modify any content, or regenerate for new versions</CardDescription>
         </CardHeader>
+        <CardContent>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full grid-cols-3">
+              {availableContent.map(([key, content]) => (
+                <TabsTrigger key={key} value={key} className="text-xs">
+                  {content.title}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            {availableContent.map(([contentType, content]) => (
+              <TabsContent key={contentType} value={contentType} className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">{content.title}</h3>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={() => handleRegenerate(contentType)}>
+                      <RefreshCw className="h-4 w-4 mr-1" />
+                      Regenerate
+                    </Button>
+                    {!isEditing(contentType) ? (
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(contentType, content.content)}>
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" onClick={() => handleSave(contentType)}>
+                        <Check className="h-4 w-4 mr-1" />
+                        Save
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {isEditing(contentType) ? (
+                  <Textarea
+                    value={editingContent[contentType]}
+                    onChange={(e) => handleEdit(contentType, e.target.value)}
+                    rows={8}
+                    className="font-mono text-sm"
+                  />
+                ) : (
+                  <div className="bg-muted rounded-lg p-4">
+                    <pre className="whitespace-pre-wrap text-sm">{content.content}</pre>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">{content.content.length} characters</Badge>
+                  <Badge variant="outline">Ready to use</Badge>
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
+        </CardContent>
       </Card>
 
-      <Tabs defaultValue="social" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="social">Social Posts</TabsTrigger>
-          <TabsTrigger value="description">Property Description</TabsTrigger>
-          <TabsTrigger value="email">Email Campaign</TabsTrigger>
-          <TabsTrigger value="flyer">Flyer Content</TabsTrigger>
-        </TabsList>
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h4 className="font-medium text-blue-900 mb-2">Content Tips</h4>
+        <ul className="text-sm text-blue-800 space-y-1">
+          <li>• Review for accuracy and brand voice consistency</li>
+          <li>• Customize with specific details about your market</li>
+          <li>• Add your contact information where needed</li>
+          <li>• Test different versions to see what performs best</li>
+        </ul>
+      </div>
 
-        <TabsContent value="social" className="space-y-4">
-          {data.generated_copy?.social_posts?.map((post: string, index: number) =>
-            renderContentItem(post, "social", index, `Social Media Post ${index + 1}`),
-          )}
-        </TabsContent>
-
-        <TabsContent value="description" className="space-y-4">
-          {renderContentItem(
-            data.generated_copy?.property_description || "Property description will appear here...",
-            "description",
-            0,
-            "Property Description",
-          )}
-        </TabsContent>
-
-        <TabsContent value="email" className="space-y-4">
-          {renderContentItem(
-            data.generated_copy?.email_campaign || "Email campaign content will appear here...",
-            "email",
-            0,
-            "Email Campaign",
-          )}
-        </TabsContent>
-
-        <TabsContent value="flyer" className="space-y-4">
-          {renderContentItem(
-            data.generated_copy?.flyer || "Flyer content will appear here...",
-            "flyer",
-            0,
-            "Property Flyer Content",
-          )}
-        </TabsContent>
-      </Tabs>
-
-      <div className="flex justify-between pt-8">
-        <Button variant="outline" onClick={onPrevious} disabled={isFirstStep}>
-          Previous
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={prevStep}>
+          Back
         </Button>
-        <Button onClick={onNext}>Continue to Preview</Button>
+        <Button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700">
+          Approve Content
+        </Button>
       </div>
     </div>
   )

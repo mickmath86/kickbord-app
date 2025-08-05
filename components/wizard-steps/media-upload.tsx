@@ -2,184 +2,168 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
+import { useState, useCallback } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Upload, ImageIcon, Video, X, Plus } from "lucide-react"
-import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
+import { Badge } from "@/components/ui/badge"
+import { Upload, ImageIcon, X, Camera, AlertCircle } from "lucide-react"
+import { useCampaignData } from "@/components/campaign-wizard"
 
-interface WizardMediaUploadProps {
-  onNext: () => void
-  onPrevious: () => void
-  isFirstStep: boolean
-  isLastStep: boolean
-}
+export function WizardMediaUpload() {
+  const { data, updateData, nextStep, prevStep } = useCampaignData()
+  const [dragActive, setDragActive] = useState(false)
+  const [uploadedImages, setUploadedImages] = useState<string[]>([])
 
-export function WizardMediaUpload({ onNext, onPrevious, isFirstStep }: WizardMediaUploadProps) {
-  const { data, updateData } = useCampaignData()
-  const [dragOver, setDragOver] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true)
+    } else if (e.type === "dragleave") {
+      setDragActive(false)
+    }
+  }, [])
 
-  // Add null check for data
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFiles(e.dataTransfer.files)
+    }
+  }, [])
+
+  const handleFiles = (files: FileList) => {
+    const newImages: string[] = []
+    Array.from(files).forEach((file) => {
+      if (file.type.startsWith("image/")) {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          if (e.target?.result) {
+            newImages.push(e.target.result as string)
+            setUploadedImages((prev) => [...prev, e.target!.result as string])
+          }
+        }
+        reader.readAsDataURL(file)
+      }
+    })
+  }
+
+  const removeImage = (index: number) => {
+    setUploadedImages((prev) => prev.filter((_, i) => i !== index))
+  }
+
+  const handleNext = () => {
+    updateData({ images: uploadedImages })
+    nextStep()
+  }
+
   if (!data) {
     return <div>Loading...</div>
   }
 
-  const handleFileSelect = (files: FileList | null) => {
-    if (!files) return
-
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const result = e.target?.result as string
-        if (file.type.startsWith("image/")) {
-          updateData({ photos: [...data.photos, result] })
-        } else if (file.type.startsWith("video/")) {
-          updateData({ videos: [...data.videos, result] })
-        }
-      }
-      reader.readAsDataURL(file)
-    })
-  }
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setDragOver(false)
-    handleFileSelect(e.dataTransfer.files)
-  }
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    setDragOver(true)
-  }
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault()
-    setDragOver(false)
-  }
-
-  const removePhoto = (index: number) => {
-    updateData({ photos: data.photos.filter((_, i) => i !== index) })
-  }
-
-  const removeVideo = (index: number) => {
-    updateData({ videos: data.videos.filter((_, i) => i !== index) })
-  }
-
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold">Property Photos</h2>
+        <p className="text-muted-foreground mt-2">Upload high-quality photos to showcase your property</p>
+      </div>
+
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Upload className="h-5 w-5" />
-            <span>Media Upload</span>
+          <CardTitle className="flex items-center gap-2">
+            <Camera className="h-5 w-5" />
+            Photo Upload
           </CardTitle>
-          <CardDescription>
-            Upload photos and videos of your property. High-quality images help create better marketing materials.
-          </CardDescription>
+          <CardDescription>Add photos that highlight the best features of your property</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-4">
           {/* Upload Area */}
           <div
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-              dragOver ? "border-blue-500 bg-blue-50" : "border-gray-300"
+              dragActive ? "border-blue-500 bg-blue-50" : "border-muted-foreground/25 hover:border-muted-foreground/50"
             }`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
             onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
           >
-            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">Upload Property Media</h3>
-            <p className="text-gray-500 mb-4">Drag and drop your photos and videos here, or click to browse</p>
-            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-              <Plus className="h-4 w-4 mr-2" />
-              Choose Files
-            </Button>
+            <Upload className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Upload Property Photos</h3>
+            <p className="text-muted-foreground mb-4">Drag and drop your images here, or click to browse</p>
             <input
-              ref={fileInputRef}
               type="file"
               multiple
-              accept="image/*,video/*"
+              accept="image/*"
+              onChange={(e) => e.target.files && handleFiles(e.target.files)}
               className="hidden"
-              onChange={(e) => handleFileSelect(e.target.files)}
+              id="file-upload"
             />
+            <label htmlFor="file-upload">
+              <Button variant="outline" className="cursor-pointer bg-transparent">
+                <ImageIcon className="h-4 w-4 mr-2" />
+                Choose Files
+              </Button>
+            </label>
           </div>
 
-          {/* Photos Grid */}
-          {data.photos.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-lg font-medium flex items-center gap-2">
-                <ImageIcon className="h-5 w-5" />
-                Photos ({data.photos.length})
-              </h3>
+          {/* Photo Tips */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div>
+                <h4 className="font-medium text-blue-900 mb-1">Photo Tips</h4>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• Use high-resolution images (at least 1200px wide)</li>
+                  <li>• Include exterior shots, main living areas, and key features</li>
+                  <li>• Ensure good lighting and clean, staged spaces</li>
+                  <li>• Upload 5-15 photos for best results</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Uploaded Images */}
+          {uploadedImages.length > 0 && (
+            <div>
+              <h4 className="font-medium mb-3">Uploaded Photos ({uploadedImages.length})</h4>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {data.photos.map((photo, index) => (
+                {uploadedImages.map((image, index) => (
                   <div key={index} className="relative group">
                     <img
-                      src={photo || "/placeholder.svg"}
+                      src={image || "/placeholder.svg"}
                       alt={`Property photo ${index + 1}`}
-                      className="w-full h-32 object-cover rounded-lg"
+                      className="w-full h-24 object-cover rounded-lg border"
                     />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6"
-                      onClick={() => removePhoto(index)}
+                    <button
+                      onClick={() => removeImage(index)}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <X className="h-3 w-3" />
-                    </Button>
+                    </button>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Videos Grid */}
-          {data.videos.length > 0 && (
-            <div className="space-y-3">
-              <h3 className="text-lg font-medium flex items-center gap-2">
-                <Video className="h-5 w-5" />
-                Videos ({data.videos.length})
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {data.videos.map((video, index) => (
-                  <div key={index} className="relative group">
-                    <video src={video} className="w-full h-48 object-cover rounded-lg" controls />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6"
-                      onClick={() => removeVideo(index)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Tips */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="font-medium text-blue-900 mb-2">Tips for better results:</h4>
-            <ul className="text-sm text-blue-700 space-y-1">
-              <li>• Use high-resolution images (at least 1920x1080)</li>
-              <li>• Include exterior shots, interior rooms, and unique features</li>
-              <li>• Ensure good lighting and clear, uncluttered spaces</li>
-              <li>• Videos should be under 100MB for best performance</li>
-            </ul>
-          </div>
-
-          <div className="flex justify-between pt-6">
-            <Button variant="outline" onClick={onPrevious} disabled={isFirstStep}>
-              Previous
-            </Button>
-            <Button onClick={onNext}>Next</Button>
+          {/* Skip Option */}
+          <div className="text-center pt-4 border-t">
+            <p className="text-sm text-muted-foreground mb-2">Don't have photos ready? You can add them later.</p>
+            <Badge variant="outline">Optional Step</Badge>
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex justify-between">
+        <Button variant="outline" onClick={prevStep}>
+          Back
+        </Button>
+        <Button onClick={handleNext} className="bg-blue-600 hover:bg-blue-700">
+          Continue
+        </Button>
+      </div>
     </div>
   )
 }

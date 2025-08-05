@@ -1,146 +1,160 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { Loader2, Sparkles, FileText, ImageIcon, Mail } from "lucide-react"
-import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
-
-interface WizardGeneratingProps {
-  onNext: () => void
-  onPrevious: () => void
-  onClose: () => void
-  isFirstStep: boolean
-  isLastStep: boolean
-}
+import { Badge } from "@/components/ui/badge"
+import { Sparkles, FileText, ImageIcon, Globe, Printer } from "lucide-react"
+import { useCampaignData } from "@/components/campaign-wizard"
 
 const GENERATION_STEPS = [
-  { id: "analyzing", label: "Analyzing property details", icon: Sparkles },
-  { id: "copy", label: "Generating marketing copy", icon: FileText },
-  { id: "visuals", label: "Creating visual concepts", icon: ImageIcon },
-  { id: "email", label: "Crafting email campaigns", icon: Mail },
-  { id: "finalizing", label: "Finalizing materials", icon: Sparkles },
+  { id: "analyzing", label: "Analyzing Property", icon: Sparkles, duration: 2000 },
+  { id: "content", label: "Generating Content", icon: FileText, duration: 3000 },
+  { id: "images", label: "Processing Images", icon: ImageIcon, duration: 2500 },
+  { id: "materials", label: "Creating Materials", icon: Printer, duration: 3500 },
+  { id: "finalizing", label: "Finalizing Campaign", icon: Globe, duration: 1500 },
 ]
 
-export function WizardGenerating({ onNext }: WizardGeneratingProps) {
-  const { data, updateData } = useCampaignData()
+export function WizardGenerating() {
+  const { nextStep } = useCampaignData()
   const [currentStep, setCurrentStep] = useState(0)
   const [progress, setProgress] = useState(0)
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(timer)
-          // Simulate generated content
-          updateData({
-            generated_copy: {
-              social_posts: [
-                "🏡 JUST LISTED! Stunning 3BR/2BA home in prime location. Modern updates throughout, gorgeous kitchen, and private backyard. Don't miss this gem! #JustListed #DreamHome",
-                "✨ NEW TO MARKET ✨ This beautiful home offers the perfect blend of comfort and style. Updated kitchen, spacious bedrooms, and move-in ready condition. Schedule your showing today!",
-              ],
-              property_description:
-                "Welcome to this exceptional 3-bedroom, 2-bathroom home that perfectly combines modern comfort with timeless appeal. The heart of the home features an updated kitchen with granite countertops and stainless steel appliances, flowing seamlessly into the open living area with beautiful hardwood floors throughout...",
-              email_campaign:
-                "Subject: New Listing Alert - Your Dream Home Awaits!\n\nDear [Name],\n\nI'm excited to share this incredible new listing that just hit the market. This stunning property offers everything you've been looking for and more...",
-            },
-          })
-          setTimeout(() => onNext(), 1000)
-          return 100
-        }
-        return prev + 2
-      })
-    }, 100)
+    let stepTimeout: NodeJS.Timeout
+    let progressInterval: NodeJS.Timeout
 
-    const stepTimer = setInterval(() => {
-      setCurrentStep((prev) => {
-        if (prev < GENERATION_STEPS.length - 1) {
-          return prev + 1
+    const runStep = (stepIndex: number) => {
+      if (stepIndex >= GENERATION_STEPS.length) {
+        // All steps complete, move to next wizard step
+        setTimeout(() => {
+          nextStep()
+        }, 1000)
+        return
+      }
+
+      setCurrentStep(stepIndex)
+      const step = GENERATION_STEPS[stepIndex]
+      let stepProgress = 0
+
+      // Animate progress for current step
+      progressInterval = setInterval(() => {
+        stepProgress += 2
+        const totalProgress = stepIndex * 20 + stepProgress * 0.2
+        setProgress(Math.min(totalProgress, 100))
+
+        if (stepProgress >= 100) {
+          clearInterval(progressInterval)
         }
-        clearInterval(stepTimer)
-        return prev
-      })
-    }, 2000)
+      }, step.duration / 50)
+
+      // Move to next step
+      stepTimeout = setTimeout(() => {
+        clearInterval(progressInterval)
+        runStep(stepIndex + 1)
+      }, step.duration)
+    }
+
+    runStep(0)
 
     return () => {
-      clearInterval(timer)
-      clearInterval(stepTimer)
+      clearTimeout(stepTimeout)
+      clearInterval(progressInterval)
     }
-  }, [onNext, updateData])
-
-  // Add null check for data
-  if (!data) {
-    return <div>Loading...</div>
-  }
+  }, [nextStep])
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="space-y-6">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold">Generating Your Campaign</h2>
+        <p className="text-muted-foreground mt-2">
+          Our AI is creating personalized marketing materials for your property
+        </p>
+      </div>
+
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="flex items-center justify-center space-x-2">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span>Generating Your Marketing Materials</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-8">
-          {/* Progress Bar */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Progress</span>
-              <span>{Math.round(progress)}%</span>
+        <CardContent className="p-8">
+          <div className="space-y-6">
+            {/* Progress Bar */}
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="font-medium">Progress</span>
+                <span>{Math.round(progress)}%</span>
+              </div>
+              <Progress value={progress} className="h-2" />
             </div>
-            <Progress value={progress} className="w-full" />
-          </div>
 
-          {/* Generation Steps */}
-          <div className="space-y-4">
-            {GENERATION_STEPS.map((step, index) => {
-              const Icon = step.icon
-              const isActive = index === currentStep
-              const isCompleted = index < currentStep
-
-              return (
-                <div
-                  key={step.id}
-                  className={`flex items-center space-x-3 p-3 rounded-lg transition-colors ${
-                    isActive
-                      ? "bg-blue-50 border border-blue-200"
-                      : isCompleted
-                        ? "bg-green-50 border border-green-200"
-                        : "bg-gray-50 border border-gray-200"
-                  }`}
-                >
-                  <div
-                    className={`p-2 rounded-full ${
-                      isActive ? "bg-blue-100" : isCompleted ? "bg-green-100" : "bg-gray-100"
-                    }`}
-                  >
-                    {isActive ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-blue-600" />
-                    ) : (
-                      <Icon className={`h-4 w-4 ${isCompleted ? "text-green-600" : "text-gray-400"}`} />
-                    )}
-                  </div>
-                  <span
-                    className={`font-medium ${
-                      isActive ? "text-blue-900" : isCompleted ? "text-green-900" : "text-gray-500"
-                    }`}
-                  >
-                    {step.label}
-                  </span>
+            {/* Current Step */}
+            <div className="text-center space-y-4">
+              <div className="flex justify-center">
+                <div className="p-4 bg-blue-100 rounded-full">
+                  {GENERATION_STEPS[currentStep] && (\
+                    <GENERATION_STEPS[currentStep].icon className="h-8 w-8 text-blue-600 animate-pulse" />
+                  )}
                 </div>
-              )
-            })}
-          </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold">
+                  {GENERATION_STEPS[currentStep]?.label}
+                </h3>
+                <p className="text-muted-foreground">
+                  This may take a few moments...
+                </p>
+              </div>
+            </div>
 
-          {/* Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h4 className="font-medium text-blue-900 mb-2">What we're creating for you:</h4>
-            <ul className="text-sm text-blue-700 space-y-1">
-              {data.materials_to_generate.map((material) => (
-                <li key={material}>• {material.replace("_", " ").replace(/\b\w/g, (l) => l.toUpperCase())}</li>
-              ))}
-            </ul>
+            {/* Steps List */}
+            <div className="space-y-3">
+              {GENERATION_STEPS.map((step, index) => {
+                const Icon = step.icon
+                const isCompleted = index < currentStep
+                const isCurrent = index === currentStep
+                const isPending = index > currentStep
+
+                return (
+                  <div
+                    key={step.id}
+                    className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+                      isCurrent ? "bg-blue-50 border border-blue-200" : ""
+                    }`}
+                  >
+                    <div className={`p-2 rounded-full ${
+                      isCompleted ? "bg-green-100" : 
+                      isCurrent ? "bg-blue-100" : "bg-gray-100"
+                    }`}>
+                      <Icon className={`h-4 w-4 ${
+                        isCompleted ? "text-green-600" :
+                        isCurrent ? "text-blue-600" : "text-gray-400"
+                      }`} />
+                    </div>
+                    <span className={`flex-1 ${
+                      isCompleted ? "text-green-700" :
+                      isCurrent ? "text-blue-700 font-medium" : "text-gray-500"
+                    }`}>
+                      {step.label}
+                    </span>
+                    <Badge variant={
+                      isCompleted ? "default" :
+                      isCurrent ? "secondary" : "outline"
+                    } className={
+                      isCompleted ? "bg-green-100 text-green-800" :
+                      isCurrent ? "bg-blue-100 text-blue-800" : ""
+                    }>
+                      {isCompleted ? "Complete" :
+                       isCurrent ? "In Progress" : "Pending"}
+                    </Badge>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Fun Facts */}
+            <div className="bg-muted rounded-lg p-4 text-center">
+              <p className="text-sm text-muted-foreground">
+                💡 <strong>Did you know?</strong> Our AI analyzes over 50 data points to create 
+                personalized marketing content that resonates with your target audience.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
