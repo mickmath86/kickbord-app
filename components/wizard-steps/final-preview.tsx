@@ -1,13 +1,10 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Facebook, Instagram, FileText, Globe, Loader2, Download, DownloadIcon } from "lucide-react"
-import { useCampaignData } from "@/components/campaign-wizard"
-import { useState } from "react"
-import { createClient } from "@/utils/supabase/client"
-import { useRouter } from "next/navigation"
+import { Download, DownloadCloud, CheckCircle } from "lucide-react"
+import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
 
 interface WizardFinalPreviewProps {
   onNext: () => void
@@ -17,277 +14,155 @@ interface WizardFinalPreviewProps {
   isLastStep: boolean
 }
 
+const materialIcons = {
+  facebook: "📘",
+  instagram: "📷",
+  google: "🌐",
+  pdf: "📄",
+  landing: "🏠",
+}
+
 export function WizardFinalPreview({ onPrevious, onClose }: WizardFinalPreviewProps) {
   const { data } = useCampaignData()
-  const [isLaunching, setIsLaunching] = useState(false)
-  const [isComplete, setIsComplete] = useState(false)
-  const router = useRouter()
 
-  const launchCampaign = async () => {
-    setIsLaunching(true)
-
-    try {
-      const supabase = createClient()
-
-      // Get current user
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser()
-
-      if (userError || !user) {
-        throw new Error("User not authenticated")
-      }
-
-      // Save campaign to database
-      const { data: campaign, error: campaignError } = await supabase
-        .from("campaigns")
-        .insert({
-          user_id: user.id,
-          property_address: data.address,
-          bedrooms: data.bedrooms,
-          bathrooms: data.bathrooms,
-          square_feet: data.square_feet,
-          price: data.price,
-          property_type: data.property_type,
-          year_built: data.year_built,
-          lot_size: data.lot_size,
-          features: data.key_features,
-          keywords: data.keywords,
-          neighborhood_info: data.additional_notes,
-          tone: data.copy_tone.join(", "),
-          media_urls: data.photos,
-          generated_copy: data.generated_copy,
-          status: "completed",
-        })
-        .select()
-        .single()
-
-      if (campaignError) {
-        throw campaignError
-      }
-
-      setIsComplete(true)
-
-      // Redirect after a short delay
-      setTimeout(() => {
-        router.push("/dashboard/campaigns/listings")
-        onClose()
-      }, 2000)
-    } catch (error) {
-      console.error("Error launching campaign:", error)
-      alert("Failed to launch campaign. Please try again.")
-    } finally {
-      setIsLaunching(false)
-    }
-  }
-
-  const downloadAll = () => {
+  const handleDownloadAll = () => {
     // In a real app, this would generate and download a zip file
-    alert("Downloading all marketing materials...")
+    console.log("Downloading all materials...")
   }
 
-  const downloadMaterial = (material: string) => {
+  const handleDownloadMaterial = (materialType: string) => {
     // In a real app, this would download the specific material
-    alert(`Downloading ${material} creative...`)
+    console.log(`Downloading ${materialType} material...`)
   }
 
-  if (isComplete) {
-    return (
-      <div className="p-6 flex flex-col items-center justify-center min-h-96">
-        <CheckCircle className="h-16 w-16 text-green-600 mb-4" />
-        <h2 className="text-2xl font-bold mb-2">Campaign Launched Successfully!</h2>
-        <p className="text-muted-foreground text-center mb-6">
-          Your listing campaign is now live and ready to generate leads.
-        </p>
-        <div className="text-sm text-muted-foreground">Redirecting to campaigns...</div>
-      </div>
-    )
-  }
-
-  const materialIcons: Record<string, any> = {
-    facebook: Facebook,
-    instagram: Instagram,
-    google: Globe,
-    pdf: FileText,
+  const handleLaunchCampaign = () => {
+    // In a real app, this would save the campaign and launch it
+    console.log("Launching campaign...")
+    onClose()
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-2">Your Campaign is Ready!</h2>
-        <p className="text-muted-foreground">Review your campaign preview and launch when ready</p>
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="text-center">
+        <div className="flex items-center justify-center mb-4">
+          <CheckCircle className="h-12 w-12 text-green-600" />
+        </div>
+        <h2 className="text-3xl font-bold mb-4">Your Campaign is Ready!</h2>
+        <p className="text-lg text-muted-foreground">
+          Your marketing materials have been generated and are ready to launch
+        </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Selected Copy Preview */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Selected Ad Copy</CardTitle>
-            <CardDescription>Your chosen copy variations</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {data.selected_copy &&
-              Object.entries(data.selected_copy).map(([copyType, optionIndex]) => {
-                const copyData = data.generated_copy?.[copyType]?.[optionIndex as number]
-                if (!copyData) return null
+      {/* Selected Channels */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Selected Channels</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-3">
+            {data.materials_to_generate.map((material) => (
+              <Badge key={material} variant="secondary" className="px-3 py-2">
+                <span className="mr-2">{materialIcons[material as keyof typeof materialIcons]}</span>
+                {material.charAt(0).toUpperCase() + material.slice(1)}
+              </Badge>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
-                return (
-                  <div key={copyType} className="border-l-2 border-blue-600 pl-3">
-                    <p className="text-sm font-medium text-blue-600 capitalize mb-1">
-                      {copyType.replace(/([A-Z])/g, " $1").trim()}
-                    </p>
-                    {copyType === "amenities" ? (
-                      <ul className="text-sm text-muted-foreground list-disc list-inside">
-                        {copyData.map((amenity: string, i: number) => (
-                          <li key={i}>{amenity}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">{copyData}</p>
-                    )}
-                  </div>
-                )
-              })}
-          </CardContent>
-        </Card>
-
-        {/* Campaign Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Campaign Details</CardTitle>
-            <CardDescription>Property and targeting information</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div>
-              <p className="font-medium">{data.address}</p>
-              <p className="text-sm text-muted-foreground">{data.property_type}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Price</p>
-                <p className="font-medium">${data.price?.toLocaleString()}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Style</p>
-                <p className="font-medium capitalize">{data.creative_style}</p>
-              </div>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Tone</p>
-              <div className="flex flex-wrap gap-1">
-                {data.copy_tone.map((tone) => (
-                  <Badge key={tone} variant="secondary" className="text-xs">
-                    {tone}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Selected Channels */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Selected Channels</CardTitle>
-            <CardDescription>Where your campaign will be deployed</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-3">
-              {data.materials_to_generate.map((material) => {
-                const Icon = materialIcons[material] || FileText
-
-                return (
-                  <div key={material} className="flex items-center space-x-2 bg-blue-50 px-3 py-2 rounded-lg">
-                    <Icon className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm font-medium capitalize">
-                      {material === "pdf" ? "PDF Brochure" : `${material} Ads`}
-                    </span>
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                  </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Marketing Materials */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Marketing Materials</CardTitle>
-                <CardDescription>Generated assets ready for deployment</CardDescription>
-              </div>
-              <Button onClick={downloadAll} variant="outline" className="flex items-center space-x-2 bg-transparent">
-                <Download className="h-4 w-4" />
-                <span>Download All</span>
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {data.materials_to_generate.map((material) => {
-                const Icon = materialIcons[material] || FileText
-
-                return (
-                  <div key={material} className="text-center p-4 border rounded-lg">
-                    <Icon className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                    <p className="font-medium capitalize mb-2">
-                      {material === "pdf" ? "PDF Brochure" : `${material} Ad`}
-                    </p>
-                    <Badge className="bg-green-100 text-green-800 mb-3">Ready</Badge>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full bg-transparent"
-                      onClick={() => downloadMaterial(material)}
-                    >
-                      <DownloadIcon className="h-3 w-3 mr-1" />
-                      Download
+      {/* Marketing Materials */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Marketing Materials</CardTitle>
+            <Button onClick={handleDownloadAll} variant="outline">
+              <DownloadCloud className="h-4 w-4 mr-2" />
+              Download All
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {data.materials_to_generate.map((material) => (
+              <Card key={material} className="border-2">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-2xl">{materialIcons[material as keyof typeof materialIcons]}</span>
+                      <h3 className="font-medium">{material.charAt(0).toUpperCase() + material.slice(1)} Ad</h3>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => handleDownloadMaterial(material)}>
+                      <Download className="h-4 w-4" />
                     </Button>
                   </div>
-                )
-              })}
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Landing Page Preview */}
-        <Card className="md:col-span-2">
-          <CardHeader>
-            <CardTitle>Landing Page Preview</CardTitle>
-            <CardDescription>Your property's dedicated landing page</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="bg-gray-50 rounded-lg p-6 text-center">
-              <div className="w-full h-32 bg-white rounded border-2 border-dashed border-gray-300 flex items-center justify-center mb-4">
-                <div className="text-center">
-                  <Globe className="h-8 w-8 mx-auto mb-2 text-gray-400" />
-                  <p className="text-sm text-gray-500">Landing Page Preview</p>
-                </div>
+                  <div className="bg-gray-100 rounded-lg p-4 mb-3">
+                    <div className="text-center text-gray-500 text-sm">{material.toUpperCase()} Creative Preview</div>
+                    <div className="mt-2 text-xs text-gray-400">Final creative will be generated here</div>
+                  </div>
+
+                  <div className="text-xs text-muted-foreground">
+                    Ready for {material === "pdf" ? "print" : "digital"} distribution
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Campaign Summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Campaign Summary</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-medium mb-2">Property Details</h4>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>
+                  <strong>Address:</strong> {data.address}
+                </p>
+                <p>
+                  <strong>Type:</strong> {data.property_type}
+                </p>
+                <p>
+                  <strong>Price:</strong> ${data.price?.toLocaleString()}
+                </p>
+                <p>
+                  <strong>Size:</strong> {data.bedrooms} bed, {data.bathrooms} bath, {data.square_feet} sq ft
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Professional landing page with lead capture form and property details
-              </p>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <div>
+              <h4 className="font-medium mb-2">Marketing Preferences</h4>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>
+                  <strong>Style:</strong> {data.creative_style}
+                </p>
+                <p>
+                  <strong>Tone:</strong> {data.copy_tone.join(", ")}
+                </p>
+                <p>
+                  <strong>Materials:</strong> {data.materials_to_generate.length} types
+                </p>
+                <p>
+                  <strong>Photos:</strong> {data.photos.length} uploaded
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-      <div className="flex justify-between pt-6">
-        <Button variant="outline" onClick={onPrevious}>
+      {/* Navigation */}
+      <div className="flex justify-between pt-8">
+        <Button variant="outline" onClick={onPrevious} size="lg">
           Previous
         </Button>
-        <Button onClick={launchCampaign} disabled={isLaunching} className="bg-green-600 hover:bg-green-700" size="lg">
-          {isLaunching ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Launching Campaign...
-            </>
-          ) : (
-            "Launch Campaign"
-          )}
+        <Button onClick={handleLaunchCampaign} size="lg" className="bg-green-600 hover:bg-green-700">
+          Launch Campaign
         </Button>
       </div>
     </div>

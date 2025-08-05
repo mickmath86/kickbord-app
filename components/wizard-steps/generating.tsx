@@ -1,8 +1,10 @@
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
-import { Loader2, CheckCircle } from "lucide-react"
-import { useCampaignData } from "@/components/campaign-wizard"
+import { useEffect, useState } from "react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { CheckCircle, Loader2 } from "lucide-react"
+import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
 
 interface WizardGeneratingProps {
   onNext: () => void
@@ -13,119 +15,130 @@ interface WizardGeneratingProps {
 }
 
 const generationSteps = [
-  "Analyzing property details...",
-  "Processing uploaded media...",
-  "Generating ad copy variations...",
-  "Creating visual mockups...",
-  "Finalizing marketing materials...",
+  { id: 1, label: "Analyzing property details", duration: 2000 },
+  { id: 2, label: "Creating marketing copy", duration: 3000 },
+  { id: 3, label: "Generating headlines and descriptions", duration: 2500 },
+  { id: 4, label: "Optimizing for selected platforms", duration: 2000 },
+  { id: 5, label: "Finalizing materials", duration: 1500 },
 ]
 
 export function WizardGenerating({ onNext }: WizardGeneratingProps) {
   const { updateData } = useCampaignData()
   const [currentStep, setCurrentStep] = useState(0)
-  const [isComplete, setIsComplete] = useState(false)
-  const [hasUpdatedData, setHasUpdatedData] = useState(false)
-
-  const generateMockData = useCallback(() => {
-    const mockGeneratedCopy = {
-      headline: [
-        "Stunning Modern Home in Prime Location",
-        "Your Dream Home Awaits in This Beautiful Property",
-        "Exceptional Living in the Heart of the City",
-      ],
-      eyebrow: ["Just Listed", "New to Market", "Exclusive Opportunity"],
-      subCopy: ["Discover luxury living at its finest", "Where comfort meets elegance", "Your perfect home is waiting"],
-      fullBio: [
-        "This exceptional property offers the perfect blend of modern amenities and timeless charm. Located in a highly sought-after neighborhood, this home features spacious rooms, updated finishes, and a beautiful outdoor space perfect for entertaining.",
-        "Welcome to your new home! This beautifully maintained property boasts an open floor plan, gourmet kitchen, and luxurious master suite. The private backyard oasis is perfect for relaxation and hosting gatherings with family and friends.",
-        "Step into luxury with this meticulously crafted home. Every detail has been thoughtfully designed to create a warm and inviting atmosphere. From the moment you walk through the front door, you'll feel right at home.",
-      ],
-      amenities: [
-        ["Updated Kitchen", "Spacious Bedrooms", "Private Backyard", "Garage Parking"],
-        ["Modern Appliances", "Walk-in Closets", "Outdoor Entertainment Area", "Storage Space"],
-        ["Premium Finishes", "Natural Light", "Landscaped Yard", "Convenient Location"],
-      ],
-      cta: ["Schedule Your Private Tour Today", "Book a Showing Now", "Contact Us for More Information"],
-    }
-
-    updateData({ generated_copy: mockGeneratedCopy })
-    setHasUpdatedData(true)
-  }, [updateData])
+  const [progress, setProgress] = useState(0)
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentStep((prev) => {
-        if (prev < generationSteps.length - 1) {
-          return prev + 1
-        } else {
-          setIsComplete(true)
-          clearInterval(interval)
-          return prev
+    let stepIndex = 0
+    let progressValue = 0
+
+    const runStep = () => {
+      if (stepIndex < generationSteps.length) {
+        setCurrentStep(stepIndex)
+
+        const stepDuration = generationSteps[stepIndex].duration
+        const progressIncrement = 100 / generationSteps.length
+        const startProgress = progressValue
+        const endProgress = progressValue + progressIncrement
+
+        // Animate progress for current step
+        const progressInterval = setInterval(
+          () => {
+            progressValue += 2
+            if (progressValue >= endProgress) {
+              progressValue = endProgress
+              clearInterval(progressInterval)
+
+              stepIndex++
+              setTimeout(runStep, 500) // Brief pause between steps
+            }
+            setProgress(progressValue)
+          },
+          stepDuration / (progressIncrement / 2),
+        )
+      } else {
+        // Generation complete, create mock data
+        const mockGeneratedCopy = {
+          headline: [
+            "Stunning Modern Home in Prime Location",
+            "Your Dream Home Awaits in This Beautiful Property",
+            "Exceptional Living in a Desirable Neighborhood",
+          ],
+          eyebrow: ["NEW LISTING", "JUST LISTED", "EXCLUSIVE OPPORTUNITY"],
+          subCopy: [
+            "Discover luxury living in this beautifully appointed home featuring modern amenities and prime location.",
+            "This exceptional property offers the perfect blend of comfort, style, and convenience.",
+            "Experience the best of modern living in this thoughtfully designed home.",
+          ],
+          fullBio: [
+            "Welcome to this stunning property that perfectly combines modern luxury with comfortable living. Featuring spacious rooms, premium finishes, and an ideal location, this home offers everything you've been searching for. The open-concept design creates a seamless flow between living spaces, while large windows flood the interior with natural light.",
+            "This exceptional home showcases the finest in contemporary design and functionality. From the moment you enter, you'll be impressed by the attention to detail and quality craftsmanship throughout. The thoughtfully planned layout maximizes both privacy and entertainment possibilities.",
+            "Nestled in a highly sought-after neighborhood, this beautiful property offers the perfect sanctuary from the everyday hustle. With its blend of modern amenities and timeless appeal, this home represents an outstanding opportunity for discerning buyers.",
+          ],
+          amenities: [
+            ["Modern Kitchen", "Spacious Bedrooms", "Updated Bathrooms", "Private Outdoor Space"],
+            ["Premium Finishes", "Open Floor Plan", "Natural Light", "Prime Location"],
+            ["Move-in Ready", "Quality Construction", "Desirable Neighborhood", "Excellent Value"],
+          ],
+          cta: [
+            "Schedule Your Private Tour Today",
+            "Contact Us for More Information",
+            "Don't Miss This Opportunity - Call Now",
+          ],
         }
-      })
-    }, 1500)
 
-    return () => clearInterval(interval)
-  }, [])
-
-  useEffect(() => {
-    if (isComplete && !hasUpdatedData) {
-      generateMockData()
+        updateData({ generated_copy: mockGeneratedCopy })
+        setTimeout(onNext, 1000)
+      }
     }
-  }, [isComplete, hasUpdatedData, generateMockData])
 
-  useEffect(() => {
-    if (isComplete && hasUpdatedData) {
-      const timeout = setTimeout(() => {
-        onNext()
-      }, 2000)
-
-      return () => clearTimeout(timeout)
-    }
-  }, [isComplete, hasUpdatedData, onNext])
+    runStep()
+  }, [updateData, onNext])
 
   return (
-    <div className="p-6 flex flex-col items-center justify-center min-h-96">
-      <div className="text-center space-y-6">
-        <div className="w-16 h-16 mx-auto">
-          {isComplete ? (
-            <CheckCircle className="w-16 h-16 text-green-600" />
-          ) : (
-            <Loader2 className="w-16 h-16 text-blue-600 animate-spin" />
-          )}
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-bold mb-2">
-            {isComplete ? "Generation Complete!" : "Generating Your Marketing Materials"}
-          </h2>
-          <p className="text-muted-foreground">
-            {isComplete
-              ? "Your marketing copy has been generated successfully"
-              : "Please wait while we create your personalized marketing content"}
-          </p>
-        </div>
-
-        <div className="space-y-3 max-w-md">
-          {generationSteps.map((step, index) => (
-            <div key={index} className="flex items-center space-x-3">
-              <div
-                className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                  index < currentStep ? "bg-green-600" : index === currentStep ? "bg-blue-600" : "bg-gray-200"
-                }`}
-              >
-                {index < currentStep && <CheckCircle className="w-3 h-3 text-white" />}
-                {index === currentStep && !isComplete && <Loader2 className="w-3 h-3 text-white animate-spin" />}
-              </div>
-              <span className={`text-sm ${index <= currentStep ? "text-foreground" : "text-muted-foreground"}`}>
-                {step}
-              </span>
+    <div className="max-w-2xl mx-auto">
+      <Card>
+        <CardContent className="p-12 text-center">
+          <div className="space-y-8">
+            <div>
+              <Loader2 className="h-16 w-16 animate-spin text-blue-600 mx-auto mb-6" />
+              <h2 className="text-2xl font-bold mb-2">Generating Your Marketing Materials</h2>
+              <p className="text-muted-foreground">
+                Our AI is creating personalized copy and materials for your property listing
+              </p>
             </div>
-          ))}
-        </div>
 
-        {isComplete && <div className="text-sm text-muted-foreground">Proceeding to copy review...</div>}
-      </div>
+            <div className="space-y-6">
+              <Progress value={progress} className="w-full h-2" />
+
+              <div className="space-y-4">
+                {generationSteps.map((step, index) => (
+                  <div
+                    key={step.id}
+                    className={`flex items-center space-x-3 p-3 rounded-lg transition-all ${
+                      index < currentStep
+                        ? "bg-green-50 text-green-700"
+                        : index === currentStep
+                          ? "bg-blue-50 text-blue-700"
+                          : "text-muted-foreground"
+                    }`}
+                  >
+                    {index < currentStep ? (
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                    ) : index === currentStep ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                    ) : (
+                      <div className="h-5 w-5 rounded-full border-2 border-gray-300" />
+                    )}
+                    <span className="font-medium">{step.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="text-sm text-muted-foreground">This usually takes 30-60 seconds...</div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

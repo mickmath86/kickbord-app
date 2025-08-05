@@ -2,23 +2,29 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
-import { CampaignWizard } from "@/components/campaign-wizard"
+import { useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { Plus } from "lucide-react"
 
 interface CampaignWizardTriggerProps {
-  children: React.ReactNode
+  children?: React.ReactNode
 }
 
 export function CampaignWizardTrigger({ children }: CampaignWizardTriggerProps) {
-  const [open, setOpen] = useState(false)
+  const router = useRouter()
+
+  const handleCreateCampaign = () => {
+    router.push("/dashboard/campaigns/create")
+  }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0">
-        <CampaignWizard onClose={() => setOpen(false)} />
-      </DialogContent>
-    </Dialog>
+    <Button onClick={handleCreateCampaign} className="bg-blue-600 hover:bg-blue-700">
+      {children || (
+        <>
+          <Plus className="mr-2 h-4 w-4" />
+          New Campaign
+        </>
+      )}
+    </Button>
   )
 }

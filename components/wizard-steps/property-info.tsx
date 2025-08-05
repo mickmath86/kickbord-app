@@ -1,5 +1,7 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { X, Plus } from "lucide-react"
-import { useCampaignData } from "@/components/campaign-wizard"
+import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
 
 interface WizardPropertyInfoProps {
   onNext: () => void
@@ -40,6 +42,33 @@ export function WizardPropertyInfo({ onNext, onPrevious, isFirstStep }: WizardPr
   const { data, updateData } = useCampaignData()
   const [newKeyword, setNewKeyword] = useState("")
   const [newFeature, setNewFeature] = useState("")
+  const [priceInput, setPriceInput] = useState(data.price ? formatPrice(data.price) : "")
+
+  function formatPrice(value: number): string {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value)
+  }
+
+  function parsePriceInput(input: string): number | null {
+    const numericValue = input.replace(/[^0-9]/g, "")
+    return numericValue ? Number.parseInt(numericValue) : null
+  }
+
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value
+    setPriceInput(input)
+
+    const numericValue = parsePriceInput(input)
+    updateData({ price: numericValue })
+
+    if (numericValue) {
+      setPriceInput(formatPrice(numericValue))
+    }
+  }
 
   const handleFeatureChange = (feature: string, checked: boolean) => {
     const updatedFeatures = checked ? [...data.key_features, feature] : data.key_features.filter((f) => f !== feature)
@@ -73,19 +102,21 @@ export function WizardPropertyInfo({ onNext, onPrevious, isFirstStep }: WizardPr
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold mb-2">Property Information</h2>
-        <p className="text-muted-foreground">Tell us about the property to create targeted marketing materials</p>
+    <div className="max-w-6xl mx-auto space-y-8">
+      <div className="text-center">
+        <h2 className="text-3xl font-bold mb-4">Property Information</h2>
+        <p className="text-lg text-muted-foreground">
+          Tell us about the property to create targeted marketing materials
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Basic Information */}
         <Card>
           <CardHeader>
             <CardTitle>Basic Details</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <div>
               <Label htmlFor="property-type">Property Type *</Label>
               <Select value={data.property_type} onValueChange={(value) => updateData({ property_type: value })}>
@@ -114,13 +145,7 @@ export function WizardPropertyInfo({ onNext, onPrevious, isFirstStep }: WizardPr
 
             <div>
               <Label htmlFor="price">Price *</Label>
-              <Input
-                id="price"
-                type="number"
-                placeholder="500000"
-                value={data.price || ""}
-                onChange={(e) => updateData({ price: Number.parseInt(e.target.value) || null })}
-              />
+              <Input id="price" placeholder="$500,000" value={priceInput} onChange={handlePriceChange} />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -157,39 +182,40 @@ export function WizardPropertyInfo({ onNext, onPrevious, isFirstStep }: WizardPr
                 onChange={(e) => updateData({ square_feet: Number.parseInt(e.target.value) || null })}
               />
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="lot-size">Lot Size</Label>
+                <Input
+                  id="lot-size"
+                  placeholder="0.25 acres"
+                  value={data.lot_size}
+                  onChange={(e) => updateData({ lot_size: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="year-built">Year Built</Label>
+                <Input
+                  id="year-built"
+                  type="number"
+                  placeholder="2020"
+                  value={data.year_built || ""}
+                  onChange={(e) => updateData({ year_built: Number.parseInt(e.target.value) || null })}
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
-        {/* Additional Details */}
+        {/* Features and Details */}
         <Card>
           <CardHeader>
-            <CardTitle>Additional Details</CardTitle>
+            <CardTitle>Features & Details</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="lot-size">Lot Size</Label>
-              <Input
-                id="lot-size"
-                placeholder="0.25 acres"
-                value={data.lot_size}
-                onChange={(e) => updateData({ lot_size: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="year-built">Year Built</Label>
-              <Input
-                id="year-built"
-                type="number"
-                placeholder="2020"
-                value={data.year_built || ""}
-                onChange={(e) => updateData({ year_built: Number.parseInt(e.target.value) || null })}
-              />
-            </div>
-
+          <CardContent className="space-y-6">
             <div>
               <Label>Key Features</Label>
-              <div className="grid grid-cols-2 gap-2 mt-2">
+              <div className="grid grid-cols-2 gap-3 mt-3">
                 {keyFeatures.map((feature) => (
                   <div key={feature} className="flex items-center space-x-2">
                     <Checkbox
@@ -205,7 +231,7 @@ export function WizardPropertyInfo({ onNext, onPrevious, isFirstStep }: WizardPr
               </div>
 
               {/* Custom Features */}
-              <div className="mt-4">
+              <div className="mt-6">
                 <Label>Custom Features</Label>
                 <div className="flex gap-2 mt-2">
                   <Input
@@ -218,71 +244,83 @@ export function WizardPropertyInfo({ onNext, onPrevious, isFirstStep }: WizardPr
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="flex flex-wrap gap-2 mt-2">
+                <div className="flex flex-wrap gap-2 mt-3">
                   {data.key_features
                     .filter((feature) => !keyFeatures.includes(feature))
                     .map((feature) => (
                       <Badge key={feature} variant="secondary" className="flex items-center gap-1">
                         {feature}
-                        <X className="h-3 w-3 cursor-pointer" onClick={() => removeCustomFeature(feature)} />
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            removeCustomFeature(feature)
+                          }}
+                          className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
                       </Badge>
                     ))}
                 </div>
               </div>
             </div>
+
+            <div>
+              <Label>Keywords</Label>
+              <p className="text-sm text-muted-foreground mb-2">Add phrases like "walk to beach", "corner lot", etc.</p>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add keyword"
+                  value={newKeyword}
+                  onChange={(e) => setNewKeyword(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && addKeyword()}
+                />
+                <Button type="button" onClick={addKeyword} size="sm">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-3">
+                {data.keywords.map((keyword) => (
+                  <Badge key={keyword} variant="secondary" className="flex items-center gap-1">
+                    {keyword}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        removeKeyword(keyword)
+                      }}
+                      className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="additional-notes">Additional Notes</Label>
+              <Textarea
+                id="additional-notes"
+                placeholder="Any additional information about the property..."
+                value={data.additional_notes}
+                onChange={(e) => updateData({ additional_notes: e.target.value })}
+                rows={4}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Keywords and Notes */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Marketing Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label>Keywords</Label>
-            <p className="text-sm text-muted-foreground mb-2">Add phrases like "walk to beach", "corner lot", etc.</p>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Add keyword"
-                value={newKeyword}
-                onChange={(e) => setNewKeyword(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && addKeyword()}
-              />
-              <Button type="button" onClick={addKeyword} size="sm">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {data.keywords.map((keyword) => (
-                <Badge key={keyword} variant="secondary" className="flex items-center gap-1">
-                  {keyword}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => removeKeyword(keyword)} />
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="additional-notes">Additional Notes</Label>
-            <Textarea
-              id="additional-notes"
-              placeholder="Any additional information about the property..."
-              value={data.additional_notes}
-              onChange={(e) => updateData({ additional_notes: e.target.value })}
-              rows={3}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Navigation */}
-      <div className="flex justify-between pt-6">
-        <Button variant="outline" onClick={onPrevious} disabled={isFirstStep}>
+      <div className="flex justify-between pt-8">
+        <Button variant="outline" onClick={onPrevious} disabled={isFirstStep} size="lg">
           Previous
         </Button>
-        <Button onClick={onNext} disabled={!isFormValid()}>
+        <Button onClick={onNext} disabled={!isFormValid()} size="lg">
           Next: Media Upload
         </Button>
       </div>
