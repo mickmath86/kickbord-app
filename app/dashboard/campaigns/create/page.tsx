@@ -1,12 +1,14 @@
 "use client"
 
 import { useState, createContext, useContext } from "react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { ArrowLeft } from "lucide-react"
+import { useRouter } from "next/navigation"
 import { WizardOnboarding } from "@/components/wizard-steps/onboarding"
-import { WizardPropertyInfo } from "@/components/wizard-steps/property-info"
+import { WizardPropertyAddress } from "@/components/wizard-steps/property-address"
+import { WizardPropertyBasics } from "@/components/wizard-steps/property-basics"
+import { WizardPropertyDetails } from "@/components/wizard-steps/property-details"
 import { WizardMediaUpload } from "@/components/wizard-steps/media-upload"
 import { WizardAdPreferences } from "@/components/wizard-steps/ad-preferences"
 import { WizardGenerating } from "@/components/wizard-steps/generating"
@@ -37,7 +39,8 @@ export interface CampaignData {
   save_style: boolean
   copy_tone: string[]
   save_tone_default: boolean
-  additional_tone_preferences: string
+  listing_style: string[]
+  keywords_to_include: string
 
   // Generated Content
   generated_copy: any
@@ -64,7 +67,8 @@ const initialData: CampaignData = {
   save_style: false,
   copy_tone: [],
   save_tone_default: false,
-  additional_tone_preferences: "",
+  listing_style: [],
+  keywords_to_include: "",
   generated_copy: null,
   selected_copy: {},
   feedback: {},
@@ -72,12 +76,14 @@ const initialData: CampaignData = {
 
 const steps = [
   { id: 1, title: "Welcome", phase: 1, component: WizardOnboarding },
-  { id: 2, title: "Property Info", phase: 1, component: WizardPropertyInfo },
-  { id: 3, title: "Media Upload", phase: 1, component: WizardMediaUpload },
-  { id: 4, title: "Ad Preferences", phase: 2, component: WizardAdPreferences },
-  { id: 5, title: "Generating", phase: 2, component: WizardGenerating },
-  { id: 6, title: "Copy Review", phase: 2, component: WizardCopyReview },
-  { id: 7, title: "Final Preview", phase: 2, component: WizardFinalPreview },
+  { id: 2, title: "Property Address", phase: 1, component: WizardPropertyAddress },
+  { id: 3, title: "Property Basics", phase: 1, component: WizardPropertyBasics },
+  { id: 4, title: "Property Details", phase: 1, component: WizardPropertyDetails },
+  { id: 5, title: "Media Upload", phase: 1, component: WizardMediaUpload },
+  { id: 6, title: "Ad Preferences", phase: 2, component: WizardAdPreferences },
+  { id: 7, title: "Generating", phase: 2, component: WizardGenerating },
+  { id: 8, title: "Copy Review", phase: 2, component: WizardCopyReview },
+  { id: 9, title: "Final Preview", phase: 2, component: WizardFinalPreview },
 ]
 
 // Context for sharing data between steps
@@ -97,21 +103,7 @@ export const useCampaignData = () => {
 export default function CreateCampaignPage() {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
-  const [campaignData, setCampaignData] = useState<CampaignData>(() => {
-    // Load saved preferences from localStorage
-    if (typeof window !== "undefined") {
-      const savedPreferences = localStorage.getItem("campaign_preferences")
-      if (savedPreferences) {
-        const preferences = JSON.parse(savedPreferences)
-        return {
-          ...initialData,
-          creative_style: preferences.save_style ? preferences.creative_style : "",
-          copy_tone: preferences.save_tone_default ? preferences.copy_tone : [],
-        }
-      }
-    }
-    return initialData
-  })
+  const [campaignData, setCampaignData] = useState<CampaignData>(initialData)
 
   const currentStepData = steps.find((step) => step.id === currentStep)
   const CurrentStepComponent = currentStepData?.component
@@ -136,24 +128,7 @@ export default function CreateCampaignPage() {
   }
 
   const updateCampaignData = (updates: Partial<CampaignData>) => {
-    setCampaignData((prev) => {
-      const newData = { ...prev, ...updates }
-
-      // Save preferences to localStorage when save options are checked
-      if (typeof window !== "undefined") {
-        if (updates.save_style !== undefined || updates.save_tone_default !== undefined) {
-          const preferences = {
-            save_style: newData.save_style,
-            creative_style: newData.creative_style,
-            save_tone_default: newData.save_tone_default,
-            copy_tone: newData.copy_tone,
-          }
-          localStorage.setItem("campaign_preferences", JSON.stringify(preferences))
-        }
-      }
-
-      return newData
-    })
+    setCampaignData((prev) => ({ ...prev, ...updates }))
   }
 
   const getPhaseSteps = (phase: number) => {
@@ -166,6 +141,10 @@ export default function CreateCampaignPage() {
     return currentPhaseStepIndex + 1
   }
 
+  const getPhaseTitle = () => {
+    return currentPhase === 1 ? "Property Setup" : "Marketing Generation"
+  }
+
   return (
     <CampaignContext.Provider value={{ data: campaignData, updateData: updateCampaignData }}>
       <div className="min-h-screen bg-gray-50">
@@ -174,31 +153,26 @@ export default function CreateCampaignPage() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
               <div className="flex items-center space-x-4">
-                <Button variant="ghost" size="sm" onClick={handleClose}>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Campaigns
+                <Button variant="ghost" size="icon" onClick={handleClose}>
+                  <ArrowLeft className="h-4 w-4" />
                 </Button>
-                <div className="h-6 w-px bg-gray-300" />
-                <h1 className="text-xl font-semibold">Create Listing Campaign</h1>
-                <div className="text-sm text-muted-foreground">
-                  Phase {currentPhase} of 2: {currentStepData?.title} ({getCurrentPhaseStep()} of{" "}
-                  {getPhaseSteps(currentPhase).length})
+                <div>
+                  <h1 className="text-xl font-semibold">Create Listing Campaign</h1>
+                  <div className="text-sm text-muted-foreground">
+                    Phase {currentPhase} of 2: {getPhaseTitle()} • Step {getCurrentPhaseStep()} of{" "}
+                    {getPhaseSteps(currentPhase).length}
+                  </div>
                 </div>
               </div>
+              <div className="text-sm text-muted-foreground">{Math.round(progress)}% Complete</div>
             </div>
           </div>
         </div>
 
         {/* Progress Bar */}
         <div className="bg-white border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium">
-                Phase {currentPhase}: {currentPhase === 1 ? "Property Information" : "Marketing Preferences"}
-              </span>
-              <span className="text-sm text-muted-foreground">{Math.round(progress)}% Complete</span>
-            </div>
-            <Progress value={progress} className="w-full" />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <Progress value={progress} className="w-full h-2" />
           </div>
         </div>
 

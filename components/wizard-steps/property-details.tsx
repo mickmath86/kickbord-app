@@ -1,18 +1,17 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { X } from "lucide-react"
-import type { CampaignData } from "@/components/campaign-wizard"
-import { useState } from "react"
+import { X, Plus, Star, Tag } from "lucide-react"
+import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
 
 interface WizardPropertyDetailsProps {
-  data: CampaignData
-  updateData: (updates: Partial<CampaignData>) => void
   onNext: () => void
   onPrevious: () => void
   onClose: () => void
@@ -20,308 +19,197 @@ interface WizardPropertyDetailsProps {
   isLastStep: boolean
 }
 
-const propertyTypes = ["Single-family", "Condo", "Townhouse", "Multi-family", "Commercial", "Land", "Mobile Home"]
-
-const commonFeatures = [
+const keyFeatures = [
   "Pool",
   "Garage",
-  "Fireplace",
-  "Renovated",
   "ADU",
-  "Hardwood Floors",
-  "Stainless Appliances",
+  "Fireplace",
+  "Renovated Kitchen",
+  "EV Charger",
   "Walk-in Closet",
-  "Balcony",
-  "Patio",
-  "Garden",
-  "Central AC",
-  "In-unit Laundry",
-  "Parking",
-  "Storage",
-  "Gym",
-  "Elevator",
+  "Outdoor Space",
+  "In-Unit Laundry",
+  "Gated Access",
+  "Smart Home Features",
 ]
 
-const commonKeywords = [
-  "Luxury",
-  "Turnkey",
-  "Investor-friendly",
-  "Walkable",
-  "Coastal",
-  "Urban",
-  "Family-friendly",
-  "Modern",
-  "Charming",
-  "Spacious",
-  "Cozy",
-  "Updated",
-  "Move-in Ready",
-  "Prime Location",
-  "Quiet",
-  "Trendy",
-  "Historic",
-]
-
-const ctaOptions = [
-  "Book a showing",
-  "Contact agent",
-  "Download brochure",
-  "Schedule tour",
-  "Get more info",
-  "Make an offer",
-]
-
-export function WizardPropertyDetails({ data, updateData, onNext, onPrevious }: WizardPropertyDetailsProps) {
-  const [newFeature, setNewFeature] = useState("")
+export function WizardPropertyDetails({ onNext, onPrevious, isFirstStep }: WizardPropertyDetailsProps) {
+  const { data, updateData } = useCampaignData()
   const [newKeyword, setNewKeyword] = useState("")
+  const [newFeature, setNewFeature] = useState("")
 
-  const addFeature = (feature: string) => {
-    if (feature && !data.features.includes(feature)) {
-      updateData({ features: [...data.features, feature] })
-    }
-    setNewFeature("")
+  const handleFeatureChange = (feature: string, checked: boolean) => {
+    const updatedFeatures = checked ? [...data.key_features, feature] : data.key_features.filter((f) => f !== feature)
+    updateData({ key_features: updatedFeatures })
   }
 
-  const removeFeature = (feature: string) => {
-    updateData({ features: data.features.filter((f) => f !== feature) })
-  }
-
-  const addKeyword = (keyword: string) => {
-    if (keyword && !data.keywords.includes(keyword)) {
-      updateData({ keywords: [...data.keywords, keyword] })
+  const addKeyword = () => {
+    if (newKeyword.trim() && !data.keywords.includes(newKeyword.trim())) {
+      updateData({ keywords: [...data.keywords, newKeyword.trim()] })
+      setNewKeyword("")
     }
-    setNewKeyword("")
   }
 
   const removeKeyword = (keyword: string) => {
     updateData({ keywords: data.keywords.filter((k) => k !== keyword) })
   }
 
-  const isValid = data.property_address && data.price && data.property_type
+  const addCustomFeature = () => {
+    if (newFeature.trim() && !data.key_features.includes(newFeature.trim())) {
+      updateData({ key_features: [...data.key_features, newFeature.trim()] })
+      setNewFeature("")
+    }
+  }
+
+  const removeCustomFeature = (feature: string) => {
+    updateData({ key_features: data.key_features.filter((f) => f !== feature) })
+  }
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold mb-2">Property Details</h2>
-        <p className="text-muted-foreground">
-          Tell us about your listing so we can create targeted marketing materials
-        </p>
+    <div className="max-w-4xl mx-auto space-y-8">
+      <div className="text-center">
+        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Star className="h-8 w-8 text-blue-600" />
+        </div>
+        <h2 className="text-3xl font-bold mb-4">Features & Details</h2>
+        <p className="text-lg text-muted-foreground">Highlight what makes this property special</p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
-        {/* Basic Info */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Basic Information</h3>
-
-          <div>
-            <Label htmlFor="address">Property Address *</Label>
-            <Input
-              id="address"
-              value={data.property_address}
-              onChange={(e) => updateData({ property_address: e.target.value })}
-              placeholder="123 Main St, Los Angeles, CA 90210"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Key Features */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5" />
+              Key Features
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
             <div>
-              <Label htmlFor="bedrooms">Bedrooms</Label>
-              <Input
-                id="bedrooms"
-                type="number"
-                value={data.bedrooms || ""}
-                onChange={(e) => updateData({ bedrooms: e.target.value ? Number.parseInt(e.target.value) : null })}
-                placeholder="3"
-              />
-            </div>
-            <div>
-              <Label htmlFor="bathrooms">Bathrooms</Label>
-              <Input
-                id="bathrooms"
-                type="number"
-                step="0.5"
-                value={data.bathrooms || ""}
-                onChange={(e) => updateData({ bathrooms: e.target.value ? Number.parseFloat(e.target.value) : null })}
-                placeholder="2.5"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="sqft">Square Feet</Label>
-              <Input
-                id="sqft"
-                type="number"
-                value={data.square_feet || ""}
-                onChange={(e) => updateData({ square_feet: e.target.value ? Number.parseInt(e.target.value) : null })}
-                placeholder="2000"
-              />
-            </div>
-            <div>
-              <Label htmlFor="price">Price *</Label>
-              <Input
-                id="price"
-                type="number"
-                value={data.price || ""}
-                onChange={(e) => updateData({ price: e.target.value ? Number.parseFloat(e.target.value) : null })}
-                placeholder="750000"
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="property-type">Property Type *</Label>
-            <Select value={data.property_type} onValueChange={(value) => updateData({ property_type: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select property type" />
-              </SelectTrigger>
-              <SelectContent>
-                {propertyTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
+              <Label>Select all that apply</Label>
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                {keyFeatures.map((feature) => (
+                  <div key={feature} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={feature}
+                      checked={data.key_features.includes(feature)}
+                      onCheckedChange={(checked) => handleFeatureChange(feature, checked as boolean)}
+                    />
+                    <Label htmlFor={feature} className="text-sm">
+                      {feature}
+                    </Label>
+                  </div>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
+              </div>
+            </div>
 
-          <div className="grid grid-cols-2 gap-4">
+            {/* Custom Features */}
             <div>
-              <Label htmlFor="year-built">Year Built</Label>
-              <Input
-                id="year-built"
-                type="number"
-                value={data.year_built || ""}
-                onChange={(e) => updateData({ year_built: e.target.value ? Number.parseInt(e.target.value) : null })}
-                placeholder="1995"
-              />
+              <Label>Add Custom Features</Label>
+              <div className="flex gap-2 mt-2">
+                <Input
+                  placeholder="e.g., Wine cellar, Home theater"
+                  value={newFeature}
+                  onChange={(e) => setNewFeature(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && addCustomFeature()}
+                />
+                <Button type="button" onClick={addCustomFeature} size="sm">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-3">
+                {data.key_features
+                  .filter((feature) => !keyFeatures.includes(feature))
+                  .map((feature) => (
+                    <Badge key={feature} variant="secondary" className="flex items-center gap-1">
+                      {feature}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          removeCustomFeature(feature)
+                        }}
+                        className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+              </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Keywords & Notes */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Tag className="h-5 w-5" />
+              Marketing Keywords & Notes
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
             <div>
-              <Label htmlFor="lot-size">Lot Size</Label>
-              <Input
-                id="lot-size"
-                value={data.lot_size}
-                onChange={(e) => updateData({ lot_size: e.target.value })}
-                placeholder="0.25 acres"
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="hoa">HOA Information</Label>
-            <Input
-              id="hoa"
-              value={data.hoa_info}
-              onChange={(e) => updateData({ hoa_info: e.target.value })}
-              placeholder="$200/month"
-            />
-          </div>
-        </div>
-
-        {/* Features & Keywords */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Features & Marketing</h3>
-
-          <div>
-            <Label>Property Features</Label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {data.features.map((feature) => (
-                <Badge key={feature} variant="secondary" className="flex items-center gap-1">
-                  {feature}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => removeFeature(feature)} />
-                </Badge>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {commonFeatures
-                .filter((f) => !data.features.includes(f))
-                .map((feature) => (
-                  <Badge
-                    key={feature}
-                    variant="outline"
-                    className="cursor-pointer hover:bg-muted"
-                    onClick={() => addFeature(feature)}
-                  >
-                    + {feature}
+              <Label>Marketing Keywords</Label>
+              <p className="text-sm text-muted-foreground mb-2">
+                Add phrases like "walk to beach", "corner lot", "quiet street"
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add keyword or phrase"
+                  value={newKeyword}
+                  onChange={(e) => setNewKeyword(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && addKeyword()}
+                />
+                <Button type="button" onClick={addKeyword} size="sm">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-3">
+                {data.keywords.map((keyword) => (
+                  <Badge key={keyword} variant="secondary" className="flex items-center gap-1">
+                    {keyword}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        removeKeyword(keyword)
+                      }}
+                      className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
                   </Badge>
                 ))}
+              </div>
             </div>
-            <Input
-              value={newFeature}
-              onChange={(e) => setNewFeature(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && addFeature(newFeature)}
-              placeholder="Add custom feature..."
-            />
-          </div>
 
-          <div>
-            <Label>Descriptive Keywords</Label>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {data.keywords.map((keyword) => (
-                <Badge key={keyword} variant="secondary" className="flex items-center gap-1">
-                  {keyword}
-                  <X className="h-3 w-3 cursor-pointer" onClick={() => removeKeyword(keyword)} />
-                </Badge>
-              ))}
+            <div>
+              <Label htmlFor="additional-notes">Additional Notes</Label>
+              <Textarea
+                id="additional-notes"
+                placeholder="Any additional information about the property that would help with marketing..."
+                value={data.additional_notes}
+                onChange={(e) => updateData({ additional_notes: e.target.value })}
+                rows={6}
+              />
+              <p className="text-sm text-muted-foreground mt-2">
+                Include details about the neighborhood, recent upgrades, or unique selling points
+              </p>
             </div>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {commonKeywords
-                .filter((k) => !data.keywords.includes(k))
-                .map((keyword) => (
-                  <Badge
-                    key={keyword}
-                    variant="outline"
-                    className="cursor-pointer hover:bg-muted"
-                    onClick={() => addKeyword(keyword)}
-                  >
-                    + {keyword}
-                  </Badge>
-                ))}
-            </div>
-            <Input
-              value={newKeyword}
-              onChange={(e) => setNewKeyword(e.target.value)}
-              onKeyPress={(e) => e.key === "Enter" && addKeyword(newKeyword)}
-              placeholder="Add custom keyword..."
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="neighborhood">Neighborhood Info</Label>
-            <Textarea
-              id="neighborhood"
-              value={data.neighborhood_info}
-              onChange={(e) => updateData({ neighborhood_info: e.target.value })}
-              placeholder="West Adams, trendy area with great restaurants..."
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="cta">Call-to-Action Preference</Label>
-            <Select value={data.cta_preference} onValueChange={(value) => updateData({ cta_preference: value })}>
-              <SelectTrigger>
-                <SelectValue placeholder="What should leads do?" />
-              </SelectTrigger>
-              <SelectContent>
-                {ctaOptions.map((cta) => (
-                  <SelectItem key={cta} value={cta}>
-                    {cta}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="flex justify-between pt-6">
-        <Button variant="outline" onClick={onPrevious}>
+      {/* Navigation */}
+      <div className="flex justify-between pt-8">
+        <Button variant="outline" onClick={onPrevious} disabled={isFirstStep} size="lg">
           Previous
         </Button>
-        <Button onClick={onNext} disabled={!isValid} className="bg-blue-600 hover:bg-blue-700">
-          Next: Tone & Audience
+        <Button onClick={onNext} size="lg">
+          Next: Media Upload
         </Button>
       </div>
     </div>

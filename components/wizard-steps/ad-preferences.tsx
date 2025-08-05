@@ -1,13 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Shuffle, X, Plus } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Palette, MessageSquare, FileText } from "lucide-react"
 import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
 
 interface WizardAdPreferencesProps {
@@ -19,86 +17,105 @@ interface WizardAdPreferencesProps {
 }
 
 const materialOptions = [
-  {
-    id: "facebook",
-    label: "Facebook Ad",
-    logo: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTI0IDEyQzI0IDE4LjYyNzQgMTguNjI3NCAyNCAxMiAyNEM1LjM3MjU4IDI0IDAgMTguNjI3NCAwIDEyQzAgNS4zNzI1OCA1LjM3MjU4IDAgMTIgMEMxOC42Mjc0IDAgMjQgNS4zNzI1OCAyNCAxMloiIGZpbGw9IiMxODc3RjIiLz4KPHBhdGggZD0iTTE2LjY3MTIgMTUuNTg0TDE3LjIwNjMgMTIuMzM0SDE0LjA4MzNWMTAuMjI1QzE0LjA4MzMgOS4zNzUgMTQuNTIwOCA4LjU0MTY3IDE1Ljg0MzggOC41NDE2N0gxNy4zMzMzVjUuNzVDMTcuMzMzMyA1Ljc1IDE1LjY3NzEgNS40NTgzMyAxNC4wODMzIDUuNDU4MzNDMTAuNzUgNS40NTgzMyA4LjU4MzMzIDcuNDU4MzMgOC41ODMzMyAxMC43NVYxMi4zMzRINS43NVYxNS41ODRIOC41ODMzM1YyNEgxNC4wODMzVjE1LjU4NEgxNi42NzEyWiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+",
-  },
-  {
-    id: "instagram",
-    label: "Instagram Ad",
-    logo: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGRlZnM+CjxsaW5lYXJHcmFkaWVudCBpZD0iaW5zdGFncmFtIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj4KPHN0b3Agb2Zmc2V0PSIwJSIgc3R5bGU9InN0b3AtY29sb3I6IzgzNEE5QiIvPgo8c3RvcCBvZmZzZXQ9IjUwJSIgc3R5bGU9InN0b3AtY29sb3I6I0Q2Mjk3NiIvPgo8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNGRkRDODAiLz4KPC9saW5lYXJHcmFkaWVudD4KPC9kZWZzPgo8cGF0aCBkPSJNMTIgMkM2LjQ3NyAyIDIgNi40NzcgMiAxMkMyIDE3LjUyMyA2LjQ3NyAyMiAxMiAyMkMxNy41MjMgMjIgMjIgMTcuNTIzIDIyIDEyQzIyIDYuNDc3IDE3LjUyMyAyIDEyIDJaIiBmaWxsPSJ1cmwoI2luc3RhZ3JhbSkiLz4KPHBhdGggZD0iTTEyIDUuODM4QzE0LjQ1OSA1LjgzOCAxNC44MTkgNS44NDggMTUuODg1IDUuODk2QzE2Ljg2NyA1Ljk0IDE3LjQwNCA2LjA4NyAxNy43NCA2LjIwNUMxOC4xOTQgNi4zNzMgMTguNTI2IDYuNTc4IDE4Ljg3MyA2LjkyNUMxOS4yMiA3LjI3MiAxOS40MjUgNy42MDQgMTkuNTkzIDguMDU4QzE5LjcxMSA4LjM5NCAxOS44NTggOC45MzEgMTkuOTAyIDkuOTEzQzE5Ljk1IDEwLjk3OSAxOS45NiAxMS4zMzkgMTkuOTYgMTMuNzk4QzE5Ljk2IDE2LjI1NyAxOS45NSAxNi42MTcgMTkuOTAyIDE3LjY4M0MxOS44NTggMTguNjY1IDE5LjcxMSAxOS4yMDIgMTkuNTkzIDE5LjUzOEMxOS40MjUgMTkuOTkyIDE5LjIyIDIwLjMyNCAxOC44NzMgMjAuNjcxQzE4LjUyNiAyMS4wMTggMTguMTk0IDIxLjIyMyAxNy43NCAyMS4zOTFDMTcuNDA0IDIxLjUwOSAxNi44NjcgMjEuNjU2IDE1Ljg4NSAyMS43QzE0LjgxOSAyMS43NDggMTQuNDU5IDIxLjc1OCAxMiAyMS43NThDOS41NDEgMjEuNzU4IDkuMTgxIDIxLjc0OCA4LjExNSAyMS43QzcuMTMzIDIxLjY1NiA2LjU5NiAyMS41MDkgNi4yNiAyMS4zOTFDNS44MDYgMjEuMjIzIDUuNDc0IDIxLjAxOCA1LjEyNyAyMC42NzFDNC43OCAyMC4zMjQgNC41NzUgMTkuOTkyIDQuNDA3IDE5LjUzOEM0LjI4OSAxOS4yMDIgNC4xNDIgMTguNjY1IDQuMDk4IDE3LjY4M0M0LjA1IDE2LjYxNyA0LjA0IDE2LjI1NyA0LjA0IDEzLjc5OEM0LjA0IDExLjMzOSA0LjA1IDEwLjk3OSA0LjA5OCA5LjkxM0M0LjE0MiA4LjkzMSA0LjI4OSA4LjM5NCA0LjQwNyA4LjA1OEM0LjU3NSA3LjYwNCA0Ljc4IDcuMjcyIDUuMTI3IDYuOTI1QzUuNDc0IDYuNTc4IDUuODA2IDYuMzczIDYuMjYgNi4yMDVDNi41OTYgNi4wODcgNy4xMzMgNS45NCA4LjExNSA1Ljg5NkM5LjE4MSA1Ljg0OCA5LjU0MSA1LjgzOCAxMiA1LjgzOFpNMTIgNC4xNjJDOS41MDQgNC4xNjIgOS4xNDQgNC4xNzIgOC4wNjcgNC4yMkM2Ljk5NCA0LjI2OCA2LjI0NyA0LjQyIDUuNjEgNC42OTdDNC45NDUgNC45ODQgNC4zODMgNS4zNzggMy45MjUgNS44MzZDMy40NjcgNi4yOTQgMy4wNzMgNi44NTYgMi43ODYgNy41MjFDMi41MDkgOC4xNTggMi4zNTcgOC45MDUgMi4zMDkgOS45NzhDMi4yNjEgMTEuMDU1IDIuMjUxIDExLjQxNSAyLjI1MSAxMi45MTFDMi4yNTEgMTQuNDA3IDIuMjYxIDE0Ljc2NyAyLjMwOSAxNS44NDRDMi4zNTcgMTYuOTE3IDIuNTA5IDE3LjY2NCAyLjc4NiAxOC4zMDFDMy4wNzMgMTguOTY2IDMuNDY3IDE5LjUyOCAzLjkyNSAxOS45ODZDNC4zODMgMjAuNDQ0IDQuOTQ1IDIwLjgzOCA1LjYxIDIxLjEyNUM2LjI0NyAyMS40MDIgNi45OTQgMjEuNTU0IDguMDY3IDIxLjYwMkM5LjE0NCAyMS42NSA5LjUwNCAyMS42NiAxMiAyMS42NkMxNC40OTYgMjEuNjYgMTQuODU2IDIxLjY1IDE1LjkzMyAyMS42MDJDMTcuMDA2IDIxLjU1NCAxNy43NTMgMjEuNDAyIDE4LjM5IDIxLjEyNUMxOS4wNTUgMjAuODM4IDE5LjYxNyAyMC40NDQgMjAuMDc1IDE5Ljk4NkMyMC41MzMgMTkuNTI4IDIwLjkyNyAxOC45NjYgMjEuMjE0IDE4LjMwMUMyMS40OTEgMTcuNjY0IDIxLjY0MyAxNi45MTcgMjEuNjkxIDE1Ljg0NEMyMS43MzkgMTQuNzY3IDIxLjc0OSAxNC40MDcgMjEuNzQ5IDEyLjkxMUMyMS43NDkgMTEuNDE1IDIxLjczOSAxMS4wNTUgMjEuNjkxIDkuOTc4QzIxLjY0MyA4LjkwNSAyMS40OTEgOC4xNTggMjEuMjE0IDcuNTIxQzIwLjkyNyA2Ljg1NiAyMC41MzMgNi4yOTQgMjAuMDc1IDUuODM2QzE5LjYxNyA1LjM3OCAxOS4wNTUgNC45ODQgMTguMzkgNC42OTdDMTcuNzUzIDQuNDIgMTcuMDA2IDQuMjY4IDE1LjkzMyA0LjIyQzE0Ljg1NiA0LjE3MiAxNC40OTYgNC4xNjIgMTIgNC4xNjJaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTIgNy44MzhDOS4yNjQgNy44MzggNy4wMzggMTAuMDY0IDcuMDM4IDEyLjhDNy4wMzggMTUuNTM2IDkuMjY0IDE3Ljc2MiAxMiAxNy43NjJDMTQuNzM2IDE3Ljc2MiAxNi45NjIgMTUuNTM2IDE2Ljk2MiAxMi44QzE2Ljk2MiAxMC4wNjQgMTQuNzM2IDcuODM4IDEyIDcuODM4Wk0xMiAxNi4wODZDMTAuMTg5IDE2LjA4NiA4LjcxNCAxNC42MTEgOC43MTQgMTIuOEM4LjcxNCAxMC45ODkgMTAuMTg5IDkuNTE0IDEyIDkuNTE0QzEzLjgxMSA5LjUxNCAxNS4yODYgMTAuOTg5IDE1LjI4NiAxMi44QzE1LjI4NiAxNC42MTEgMTMuODExIDE2LjA4NiAxMiAxNi4wODZaIiBmaWxsPSJ3aGl0ZSIvPgo8cGF0aCBkPSJNMTcuMjA2IDkuMDM0QzE3LjY3NyA5LjAzNCAxOC4wNTkgOC42NTIgMTguMDU5IDguMTgxQzE4LjA1OSA3LjcxIDE3LjY3NyA3LjMyOCAxNy4yMDYgNy4zMjhDMTYuNzM1IDcuMzI4IDE2LjM1MyA3LjcxIDE2LjM1MyA4LjE4MUMxNi4zNTMgOC42NTIgMTYuNzM1IDkuMDM0IDE3LjIwNiA5LjAzNFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg==",
-  },
-  {
-    id: "google",
-    label: "Google Display Ad",
-    logo: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIyLjU2IDEyLjI1QzIyLjU2IDExLjQ3IDIyLjQ5IDEwLjcyIDIyLjM2IDEwSDE2VjE0LjI2SDIwLjkyQzIwLjY2IDE1LjYgMTkuOTIgMTYuNzQgMTguNzQgMTcuNDhWMjAuNThIMjAuNzJDMjEuNjEgMTguNzMgMjIuNTYgMTUuNzMgMjIuNTYgMTIuMjVaIiBmaWxsPSIjNDI4NUY0Ii8+CjxwYXRoIGQ9Ik0xNiAyNEMxOS40MyAyNCAyMi4yNSAyMi45MiAyMi4yNSAyMC41OEgyMC4yN0MxOS41MyAyMS4zIDE4LjUgMjEuNzUgMTYgMjEuNzVDMTMuMjQgMjEuNzUgMTAuOTEgMTkuNjkgMTAuMDcgMTYuOTZINy45NlYyMC4wOUM5LjY5IDIzLjUzIDEyLjYxIDI0IDE2IDI0WiIgZmlsbD0iIzM0QTg1MyIvPgo8cGF0aCBkPSJNMTAuMDcgMTYuOTZDOS42NyAxNS42NiA5LjY3IDEyLjM0IDEwLjA3IDExLjA0VjcuOTFINy45NkM2LjY5IDEwLjQ1IDYuNjkgMTMuNTUgNy45NiAxNi4wOUwxMC4wNyAxNi45NloiIGZpbGw9IiNGQkJDMDQiLz4KPHBhdGggZD0iTTE2IDIuMjVDMTguNSAyLjI1IDE5LjUzIDMuMzEgMjAuMjcgNC4wNEwyMi4yNSAyLjA2QzIwLjI1IDAuMTkgMTcuNDMgLTAuNzUgMTYgLTAuNzVDMTIuNjEgLTAuNzUgOS42OSAwLjQ3IDcuOTYgMy45MUwxMC4wNyA3LjA0QzEwLjkxIDQuMzEgMTMuMjQgMi4yNSAxNiAyLjI1WiIgZmlsbD0iI0VBNDMzNSIvPgo8L3N2Zz4K",
-  },
-  {
-    id: "pdf",
-    label: "PDF Brochure",
-    logo: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTggMkM2Ljg5NTQzIDIgNiAyLjg5NTQzIDYgNFYyMEM2IDIxLjEwNDYgNi44OTU0MyAyMiA4IDIySDE2QzE3LjEwNDYgMjIgMTggMjEuMTA0NiAxOCAyMFY4TDE0IDJIOFoiIGZpbGw9IiNEQzI2MjYiLz4KPHBhdGggZD0iTTE0IDJWOEgxOCIgZmlsbD0iI0Y4NzE3MSIvPgo8cGF0aCBkPSJNOSAxNEgxNSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPHBhdGggZD0iTTkgMTdIMTMiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+CjxwYXRoIGQ9Ik05IDExSDEyIiBzdHJva2U9IndoaXRlIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPgo8L3N2Zz4K",
-  },
+  { id: "social_media", label: "Social Media Posts", description: "Facebook & Instagram ready posts" },
+  { id: "landing_page", label: "Landing Page", description: "Dedicated property website" },
+  { id: "print_flyer", label: "Print Flyer", description: "Professional PDF flyer" },
+  { id: "email_template", label: "Email Template", description: "Email marketing template" },
 ]
 
-const styleOptions = [
+const creativeStyles = [
+  { id: "modern", label: "Modern", description: "Clean, minimalist design with bold typography" },
+  { id: "luxury", label: "Luxury", description: "Elegant, sophisticated with premium feel" },
+  { id: "classic", label: "Classic", description: "Traditional, timeless design approach" },
+  { id: "vibrant", label: "Vibrant", description: "Colorful, energetic with dynamic elements" },
+]
+
+const copyTones = [
+  {
+    id: "professional",
+    label: "Professional",
+    description: "Formal, authoritative tone that builds trust and credibility",
+  },
+  {
+    id: "friendly",
+    label: "Friendly",
+    description: "Warm, approachable tone that feels personal and welcoming",
+  },
   {
     id: "luxury",
-    label: "Luxury Style",
-    description: "Elegant, sophisticated, premium feel",
-    image: "/placeholder.svg?height=120&width=200&text=Luxury+Style",
-  },
-  {
-    id: "family",
-    label: "Family Friendly",
-    description: "Warm, welcoming, community-focused",
-    image: "/placeholder.svg?height=120&width=200&text=Family+Friendly",
-  },
-  {
-    id: "investor",
-    label: "Investor-Focused",
-    description: "Data-driven, ROI-focused, analytical",
-    image: "/placeholder.svg?height=120&width=200&text=Investor+Focused",
-  },
-]
-
-const toneOptions = [
-  {
-    value: "Professional",
-    label: "Professional",
-    description: "Formal, authoritative, and business-focused language",
-  },
-  {
-    value: "Casual",
-    label: "Casual",
-    description: "Relaxed, conversational, and approachable tone",
-  },
-  {
-    value: "Luxury",
     label: "Luxury",
-    description: "Sophisticated, exclusive, and premium positioning",
+    description: "Sophisticated, exclusive tone for high-end properties",
   },
   {
-    value: "Friendly",
-    label: "Friendly",
-    description: "Warm, welcoming, and personable communication",
-  },
-  {
-    value: "Urgent",
+    id: "urgent",
     label: "Urgent",
-    description: "Creates urgency and encourages immediate action",
-  },
-  {
-    value: "Minimal",
-    label: "Minimal",
-    description: "Clean, concise, and straightforward messaging",
+    description: "Creates urgency and encourages quick action from buyers",
   },
 ]
 
-export function WizardAdPreferences({ onNext, onPrevious }: WizardAdPreferencesProps) {
+// Platform logos as SVG components
+const FacebookLogo = () => (
+  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="#1877F2">
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+  </svg>
+)
+
+const InstagramLogo = () => (
+  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="url(#instagram-gradient)">
+    <defs>
+      <linearGradient id="instagram-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#833AB4" />
+        <stop offset="50%" stopColor="#FD1D1D" />
+        <stop offset="100%" stopColor="#FCB045" />
+      </linearGradient>
+    </defs>
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+  </svg>
+)
+
+const GoogleLogo = () => (
+  <svg className="w-6 h-6" viewBox="0 0 24 24">
+    <path
+      fill="#4285F4"
+      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+    />
+    <path
+      fill="#34A853"
+      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+    />
+    <path
+      fill="#EA4335"
+      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+    />
+  </svg>
+)
+
+const PDFLogo = () => (
+  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="#FF0000">
+    <path d="M8.267 14.68c-.184 0-.308.018-.372.036v1.178c.076.018.171.018.29.018.411 0 .668-.214.668-.618 0-.33-.213-.614-.586-.614zm2.274-2.882c-.198 0-.33.018-.407.036v2.61c.077.018.201.018.313.018.77 0 1.24-.375 1.24-1.364 0-.835-.396-1.3-1.146-1.3zM19.394 3.006H4.606c-.871 0-1.578.707-1.578 1.578v14.832c0 .871.707 1.578 1.578 1.578h14.788c.871 0 1.578-.707 1.578-1.578V4.584c0-.871-.707-1.578-1.578-1.578zm-7.887 8.195c0 1.104-.471 1.736-1.32 1.736-.18 0-.308-.018-.411-.054v1.617H8.822V9.712c.193-.036.471-.072.798-.072.849 0 1.287.504 1.287 1.361zm3.146 1.682c0 1.177-.543 1.827-1.578 1.827-.18 0-.36-.018-.54-.054V9.712c.216-.036.471-.072.828-.072 1.287 0 1.29.828 1.29 1.973zm2.274-1.682c0 .504-.108.9-.324 1.188-.216.288-.54.432-.936.432-.18 0-.324-.018-.432-.036v1.617h-.954V9.712c.216-.036.504-.072.9-.072.396 0 .72.108.936.324.216.216.324.504.324.936z" />
+  </svg>
+)
+
+export function WizardAdPreferences({ onNext, onPrevious, isFirstStep }: WizardAdPreferencesProps) {
   const { data, updateData } = useCampaignData()
-  const [currentStyles, setCurrentStyles] = useState(styleOptions)
-  const [newTonePreference, setNewTonePreference] = useState("")
+
+  // Load saved preferences on mount
+  useEffect(() => {
+    const savedStyle = localStorage.getItem("preferred_creative_style")
+    const savedTone = localStorage.getItem("preferred_copy_tone")
+
+    if (savedStyle && !data.creative_style) {
+      updateData({ creative_style: savedStyle })
+    }
+
+    if (savedTone && data.copy_tone.length === 0) {
+      updateData({ copy_tone: [savedTone] })
+    }
+  }, [])
 
   const handleMaterialChange = (materialId: string, checked: boolean) => {
     const updatedMaterials = checked
@@ -107,92 +124,104 @@ export function WizardAdPreferences({ onNext, onPrevious }: WizardAdPreferencesP
     updateData({ materials_to_generate: updatedMaterials })
   }
 
-  const handleStyleSelect = (styleId: string) => {
-    updateData({ creative_style: styleId })
+  const handleStyleChange = (style: string) => {
+    updateData({ creative_style: style })
   }
 
-  const randomizeStyles = () => {
-    const allStyles = [
-      ...styleOptions,
-      {
-        id: "minimalist",
-        label: "Minimalist",
-        description: "Clean, simple, uncluttered design",
-        image: "/placeholder.svg?height=120&width=200&text=Minimalist",
-      },
-      {
-        id: "rustic",
-        label: "Rustic Charm",
-        description: "Cozy, natural, countryside appeal",
-        image: "/placeholder.svg?height=120&width=200&text=Rustic+Charm",
-      },
-      {
-        id: "contemporary",
-        label: "Contemporary",
-        description: "Current trends, fresh, stylish",
-        image: "/placeholder.svg?height=120&width=200&text=Contemporary",
-      },
-    ]
-    const shuffled = allStyles.sort(() => Math.random() - 0.5).slice(0, 3)
-    setCurrentStyles(shuffled)
-  }
-
-  const handleToneChange = (tone: string, checked: boolean) => {
-    const updatedTones = checked ? [...data.copy_tone, tone] : data.copy_tone.filter((t) => t !== tone)
-    updateData({ copy_tone: updatedTones })
-  }
-
-  const addTonePreference = () => {
-    if (newTonePreference.trim() && !data.copy_tone.includes(newTonePreference.trim())) {
-      updateData({ copy_tone: [...data.copy_tone, newTonePreference.trim()] })
-      setNewTonePreference("")
+  const handleSaveStyleChange = (checked: boolean) => {
+    updateData({ save_style: checked })
+    if (checked && data.creative_style) {
+      localStorage.setItem("preferred_creative_style", data.creative_style)
+    } else {
+      localStorage.removeItem("preferred_creative_style")
     }
   }
 
-  const removeTonePreference = (tone: string) => {
-    updateData({ copy_tone: data.copy_tone.filter((t) => t !== tone) })
+  const handleToneChange = (tone: string, checked: boolean) => {
+    const updatedTones = checked
+      ? [tone] // Only allow one tone selection
+      : []
+    updateData({ copy_tone: updatedTones })
+  }
+
+  const handleSaveToneChange = (checked: boolean) => {
+    updateData({ save_tone_default: checked })
+    if (checked && data.copy_tone.length > 0) {
+      localStorage.setItem("preferred_copy_tone", data.copy_tone[0])
+    } else {
+      localStorage.removeItem("preferred_copy_tone")
+    }
   }
 
   const isFormValid = () => {
     return data.materials_to_generate.length > 0 && data.creative_style && data.copy_tone.length > 0
   }
 
+  const getPlatformLogo = (materialId: string) => {
+    switch (materialId) {
+      case "social_media":
+        return (
+          <div className="flex gap-1">
+            <FacebookLogo />
+            <InstagramLogo />
+          </div>
+        )
+      case "landing_page":
+        return <GoogleLogo />
+      case "print_flyer":
+        return <PDFLogo />
+      default:
+        return <FileText className="w-6 h-6 text-gray-400" />
+    }
+  }
+
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-8">
       <div className="text-center">
-        <div className="text-sm font-medium text-blue-600 mb-2">Phase 2 of 2: Advertising Preferences</div>
-        <h2 className="text-3xl font-bold mb-4">Customize Your Marketing Materials</h2>
-        <p className="text-lg text-muted-foreground">Choose what materials to create and how you want them styled</p>
+        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Palette className="h-8 w-8 text-blue-600" />
+        </div>
+        <h2 className="text-3xl font-bold mb-4">Marketing Preferences</h2>
+        <p className="text-lg text-muted-foreground">
+          Choose what marketing materials to generate and set your style preferences
+        </p>
       </div>
 
       {/* Materials to Generate */}
       <Card>
         <CardHeader>
-          <CardTitle>Materials to Generate</CardTitle>
-          <p className="text-sm text-muted-foreground">Select which marketing materials you'd like us to create</p>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5" />
+            Marketing Materials
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {materialOptions.map((material) => (
-              <Card
+              <div
                 key={material.id}
-                className={`cursor-pointer transition-all ${
+                className={`border rounded-lg p-4 cursor-pointer transition-colors ${
                   data.materials_to_generate.includes(material.id)
-                    ? "ring-2 ring-blue-500 bg-blue-50"
-                    : "hover:shadow-md"
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:border-gray-300"
                 }`}
                 onClick={() => handleMaterialChange(material.id, !data.materials_to_generate.includes(material.id))}
               >
-                <CardContent className="flex flex-col items-center p-6 text-center">
-                  <img src={material.logo || "/placeholder.svg"} alt={material.label} className="w-8 h-8 mb-3" />
+                <div className="flex items-start gap-3">
                   <Checkbox
                     checked={data.materials_to_generate.includes(material.id)}
                     onChange={() => {}}
-                    className="mb-2"
+                    className="mt-1"
                   />
-                  <Label className="text-sm font-medium cursor-pointer">{material.label}</Label>
-                </CardContent>
-              </Card>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      {getPlatformLogo(material.id)}
+                      <h3 className="font-medium">{material.label}</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{material.description}</p>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         </CardContent>
@@ -201,140 +230,94 @@ export function WizardAdPreferences({ onNext, onPrevious }: WizardAdPreferencesP
       {/* Creative Style */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Palette className="h-5 w-5" />
             Creative Style
-            <Button variant="outline" size="sm" onClick={randomizeStyles}>
-              <Shuffle className="h-4 w-4 mr-2" />
-              Randomize
-            </Button>
           </CardTitle>
-          <p className="text-sm text-muted-foreground">Choose the visual style for your marketing materials</p>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {currentStyles.map((style) => (
-              <Card
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {creativeStyles.map((style) => (
+              <div
                 key={style.id}
-                className={`cursor-pointer transition-all ${
-                  data.creative_style === style.id ? "ring-2 ring-blue-500 bg-blue-50" : "hover:shadow-md"
+                className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                  data.creative_style === style.id
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:border-gray-300"
                 }`}
-                onClick={() => handleStyleSelect(style.id)}
+                onClick={() => handleStyleChange(style.id)}
               >
-                <CardContent className="p-4">
-                  <img
-                    src={style.image || "/placeholder.svg"}
-                    alt={style.label}
-                    className="w-full h-24 object-cover rounded mb-3"
+                <div className="flex items-start gap-3">
+                  <input
+                    type="radio"
+                    name="creative_style"
+                    checked={data.creative_style === style.id}
+                    onChange={() => {}}
+                    className="mt-1"
                   />
-                  <div className="text-center space-y-2">
-                    <h3 className="font-medium">{style.label}</h3>
-                    <p className="text-xs text-muted-foreground">{style.description}</p>
-                    <Button
-                      variant={data.creative_style === style.id ? "default" : "outline"}
-                      size="sm"
-                      className="w-full"
-                    >
-                      {data.creative_style === style.id ? "Selected" : "Select"}
-                    </Button>
+                  <div>
+                    <h3 className="font-medium mb-1">{style.label}</h3>
+                    <p className="text-sm text-muted-foreground">{style.description}</p>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             ))}
           </div>
-          <div className="mt-6">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="save-style"
-                checked={data.save_style}
-                onCheckedChange={(checked) => updateData({ save_style: checked as boolean })}
-              />
-              <Label htmlFor="save-style" className="text-sm">
-                Save this style for future campaigns
-              </Label>
-            </div>
+
+          <div className="flex items-center space-x-2 pt-2">
+            <Checkbox id="save-style" checked={data.save_style} onCheckedChange={handleSaveStyleChange} />
+            <Label htmlFor="save-style" className="text-sm">
+              Save this style for future campaigns
+            </Label>
           </div>
         </CardContent>
       </Card>
 
-      {/* Copy Preferences */}
+      {/* Copy Tone */}
       <Card>
         <CardHeader>
-          <CardTitle>Copy Preferences</CardTitle>
-          <p className="text-sm text-muted-foreground">
-            These settings will determine the tone and style of all marketing copy generated for your campaign. You can
-            always adjust these later during the review process.
+          <CardTitle className="flex items-center gap-2">
+            <MessageSquare className="h-5 w-5" />
+            Copy Tone & Voice
+          </CardTitle>
+          <p className="text-sm text-muted-foreground mt-2">
+            This sets the tone and voice for all your marketing copy. You can adjust this later during the review
+            process.
           </p>
         </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <Label className="text-base font-medium mb-3 block">Tone (select multiple)</Label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {toneOptions.map((tone) => (
-                <Card
-                  key={tone.value}
-                  className={`cursor-pointer transition-all ${
-                    data.copy_tone.includes(tone.value) ? "ring-2 ring-blue-500 bg-blue-50" : "hover:shadow-sm"
-                  }`}
-                  onClick={() => handleToneChange(tone.value, !data.copy_tone.includes(tone.value))}
-                >
-                  <CardContent className="p-4">
-                    <div className="flex items-start space-x-3">
-                      <Checkbox checked={data.copy_tone.includes(tone.value)} onChange={() => {}} className="mt-1" />
-                      <div className="flex-1">
-                        <Label className="font-medium cursor-pointer">{tone.label}</Label>
-                        <p className="text-xs text-muted-foreground mt-1">{tone.description}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {copyTones.map((tone) => (
+              <div
+                key={tone.id}
+                className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                  data.copy_tone.includes(tone.id)
+                    ? "border-blue-500 bg-blue-50"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+                onClick={() => handleToneChange(tone.id, !data.copy_tone.includes(tone.id))}
+              >
+                <div className="flex items-start gap-3">
+                  <input
+                    type="radio"
+                    name="copy_tone"
+                    checked={data.copy_tone.includes(tone.id)}
+                    onChange={() => {}}
+                    className="mt-1"
+                  />
+                  <div>
+                    <h3 className="font-medium mb-1">{tone.label}</h3>
+                    <p className="text-sm text-muted-foreground">{tone.description}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
-          <div>
-            <Label>Additional Tone Preferences</Label>
-            <p className="text-sm text-muted-foreground mb-2">Add custom tone preferences for your copy</p>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Add tone preference"
-                value={newTonePreference}
-                onChange={(e) => setNewTonePreference(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && addTonePreference()}
-              />
-              <Button type="button" onClick={addTonePreference} size="sm">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-3">
-              {data.copy_tone
-                .filter((tone) => !toneOptions.some((t) => t.value === tone))
-                .map((tone) => (
-                  <Badge key={tone} variant="secondary" className="flex items-center gap-1">
-                    {tone}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        removeTonePreference(tone)
-                      }}
-                      className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </Badge>
-                ))}
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="save-tone"
-              checked={data.save_tone_default}
-              onCheckedChange={(checked) => updateData({ save_tone_default: checked as boolean })}
-            />
+          <div className="flex items-center space-x-2 pt-2">
+            <Checkbox id="save-tone" checked={data.save_tone_default} onCheckedChange={handleSaveToneChange} />
             <Label htmlFor="save-tone" className="text-sm">
-              Save these tone preferences as my default
+              Save these tone preferences for future campaigns
             </Label>
           </div>
         </CardContent>
@@ -342,11 +325,11 @@ export function WizardAdPreferences({ onNext, onPrevious }: WizardAdPreferencesP
 
       {/* Navigation */}
       <div className="flex justify-between pt-8">
-        <Button variant="outline" onClick={onPrevious} size="lg">
+        <Button variant="outline" onClick={onPrevious} disabled={isFirstStep} size="lg">
           Previous
         </Button>
         <Button onClick={onNext} disabled={!isFormValid()} size="lg">
-          Generate Materials
+          Generate Marketing Materials
         </Button>
       </div>
     </div>

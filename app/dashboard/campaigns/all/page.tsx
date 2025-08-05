@@ -12,13 +12,13 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Plus, Megaphone, Users, TrendingUp, Calendar, Home, ArrowRight } from "lucide-react"
+import { Plus, Home, Calendar, TrendingUp, Eye } from "lucide-react"
 import { createClient } from "@/utils/supabase/server"
 import { redirect } from "next/navigation"
 import { CampaignWizardTrigger } from "@/components/campaign-wizard-trigger"
 import Link from "next/link"
 
-export default async function CampaignsOverviewPage() {
+export default async function AllCampaignsPage() {
   const supabase = await createClient()
 
   // Get current user
@@ -54,8 +54,12 @@ export default async function CampaignsOverviewPage() {
                   <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem className="hidden md:block">
+                  <BreadcrumbLink href="/dashboard/campaigns">Overview</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden md:block" />
                 <BreadcrumbItem>
-                  <BreadcrumbPage>Overview</BreadcrumbPage>
+                  <BreadcrumbPage>All Campaigns</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>
@@ -65,8 +69,8 @@ export default async function CampaignsOverviewPage() {
           {/* Header */}
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Overview</h1>
-              <p className="text-muted-foreground">Create and manage your marketing campaigns</p>
+              <h1 className="text-3xl font-bold tracking-tight">All Campaigns</h1>
+              <p className="text-muted-foreground">View and manage all your property listing campaigns</p>
             </div>
             <CampaignWizardTrigger>
               <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
@@ -76,88 +80,16 @@ export default async function CampaignsOverviewPage() {
             </CampaignWizardTrigger>
           </div>
 
-          {/* Campaign Types */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <Card className="hover:shadow-md transition-shadow">
-              <CardHeader>
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Home className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <CardTitle>Listing Campaigns</CardTitle>
-                    <CardDescription>Generate marketing materials for property listings</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="text-sm text-muted-foreground">
-                    Create professional marketing materials including social media copy, landing pages, and print
-                    materials for your property listings.
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm">
-                      <span className="font-medium">{campaignsList.length}</span> campaigns created
-                    </div>
-                    <div className="flex space-x-2">
-                      <Link href="/dashboard/campaigns/all">
-                        <Button variant="outline" size="sm">
-                          View All
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <CampaignWizardTrigger>
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
-                          <Plus className="mr-2 h-4 w-4" />
-                          Create
-                        </Button>
-                      </CampaignWizardTrigger>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="opacity-60">
-              <CardHeader>
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-gray-100 rounded-lg">
-                    <Users className="h-6 w-6 text-gray-600" />
-                  </div>
-                  <div>
-                    <CardTitle>Lead Generation</CardTitle>
-                    <CardDescription>Coming soon - Automated lead nurturing campaigns</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="text-sm text-muted-foreground">
-                    Automated email sequences and follow-up campaigns to nurture leads and convert prospects into
-                    clients.
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm text-muted-foreground">Available soon</div>
-                    <Button variant="outline" size="sm" disabled>
-                      Coming Soon
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
           {/* Stats */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Total Campaigns</CardTitle>
-                <Megaphone className="h-4 w-4 text-muted-foreground" />
+                <Home className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{campaignsList.length}</div>
-                <p className="text-xs text-muted-foreground">All time</p>
+                <p className="text-xs text-muted-foreground">Active listing campaigns</p>
               </CardContent>
             </Card>
             <Card>
@@ -173,7 +105,7 @@ export default async function CampaignsOverviewPage() {
                     ).length
                   }
                 </div>
-                <p className="text-xs text-muted-foreground">New campaigns</p>
+                <p className="text-xs text-muted-foreground">New campaigns created</p>
               </CardContent>
             </Card>
             <Card>
@@ -196,37 +128,41 @@ export default async function CampaignsOverviewPage() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Generated Assets</CardTitle>
-                <Home className="h-4 w-4 text-muted-foreground" />
+                <Eye className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
                   {campaignsList.filter((c) => c.status === "completed").length * 4}
                 </div>
-                <p className="text-xs text-muted-foreground">Marketing materials</p>
+                <p className="text-xs text-muted-foreground">Marketing materials created</p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Recent Campaigns */}
-          {campaignsList.length > 0 && (
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Recent Campaigns</CardTitle>
-                    <CardDescription>Your latest marketing campaigns</CardDescription>
-                  </div>
-                  <Link href="/dashboard/campaigns/all">
-                    <Button variant="outline" size="sm">
-                      View All Campaigns
-                      <ArrowRight className="ml-2 h-4 w-4" />
+          {/* Campaigns List */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Campaigns</CardTitle>
+              <CardDescription>Manage and track your property marketing campaigns</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {campaignsList.length === 0 ? (
+                <div className="text-center py-12">
+                  <Home className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">No campaigns yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Create your first listing campaign to generate professional marketing materials
+                  </p>
+                  <CampaignWizardTrigger>
+                    <Button className="bg-blue-600 hover:bg-blue-700">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Your First Campaign
                     </Button>
-                  </Link>
+                  </CampaignWizardTrigger>
                 </div>
-              </CardHeader>
-              <CardContent>
+              ) : (
                 <div className="space-y-4">
-                  {campaignsList.slice(0, 3).map((campaign) => (
+                  {campaignsList.map((campaign) => (
                     <Link key={campaign.id} href={`/dashboard/campaigns/${campaign.id}`}>
                       <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
                         <div className="flex items-center space-x-4">
@@ -236,15 +172,15 @@ export default async function CampaignsOverviewPage() {
                           <div>
                             <h3 className="font-semibold">{campaign.property_address}</h3>
                             <p className="text-sm text-muted-foreground">
-                              {campaign.bedrooms}BR • {campaign.bathrooms}BA • ${campaign.price?.toLocaleString()}
+                              {campaign.bedrooms}BR • {campaign.bathrooms}BA • {campaign.square_feet?.toLocaleString()}{" "}
+                              sq ft
                             </p>
                           </div>
                         </div>
                         <div className="flex items-center space-x-4">
                           <div className="text-right">
-                            <p className="text-xs text-muted-foreground">
-                              {new Date(campaign.created_at).toLocaleDateString()}
-                            </p>
+                            <p className="text-sm font-medium">${campaign.price?.toLocaleString()}</p>
+                            <p className="text-xs text-muted-foreground capitalize">{campaign.tone} tone</p>
                           </div>
                           <Badge
                             variant={
@@ -269,9 +205,9 @@ export default async function CampaignsOverviewPage() {
                     </Link>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </CardContent>
+          </Card>
         </div>
       </SidebarInset>
     </SidebarProvider>
