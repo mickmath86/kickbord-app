@@ -76,6 +76,10 @@ const data = {
           url: "/dashboard/campaigns",
         },
         {
+          title: "Listing Campaigns",
+          url: "/dashboard/campaigns/listings",
+        },
+        {
           title: "Create Campaign",
           url: "/dashboard/campaigns/create",
         },
