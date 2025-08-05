@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Loader2, CheckCircle } from "lucide-react"
 import { useCampaignData } from "@/components/campaign-wizard"
 
@@ -24,6 +24,33 @@ export function WizardGenerating({ onNext }: WizardGeneratingProps) {
   const { updateData } = useCampaignData()
   const [currentStep, setCurrentStep] = useState(0)
   const [isComplete, setIsComplete] = useState(false)
+  const [hasUpdatedData, setHasUpdatedData] = useState(false)
+
+  const generateMockData = useCallback(() => {
+    const mockGeneratedCopy = {
+      headline: [
+        "Stunning Modern Home in Prime Location",
+        "Your Dream Home Awaits in This Beautiful Property",
+        "Exceptional Living in the Heart of the City",
+      ],
+      eyebrow: ["Just Listed", "New to Market", "Exclusive Opportunity"],
+      subCopy: ["Discover luxury living at its finest", "Where comfort meets elegance", "Your perfect home is waiting"],
+      fullBio: [
+        "This exceptional property offers the perfect blend of modern amenities and timeless charm. Located in a highly sought-after neighborhood, this home features spacious rooms, updated finishes, and a beautiful outdoor space perfect for entertaining.",
+        "Welcome to your new home! This beautifully maintained property boasts an open floor plan, gourmet kitchen, and luxurious master suite. The private backyard oasis is perfect for relaxation and hosting gatherings with family and friends.",
+        "Step into luxury with this meticulously crafted home. Every detail has been thoughtfully designed to create a warm and inviting atmosphere. From the moment you walk through the front door, you'll feel right at home.",
+      ],
+      amenities: [
+        ["Updated Kitchen", "Spacious Bedrooms", "Private Backyard", "Garage Parking"],
+        ["Modern Appliances", "Walk-in Closets", "Outdoor Entertainment Area", "Storage Space"],
+        ["Premium Finishes", "Natural Light", "Landscaped Yard", "Convenient Location"],
+      ],
+      cta: ["Schedule Your Private Tour Today", "Book a Showing Now", "Contact Us for More Information"],
+    }
+
+    updateData({ generated_copy: mockGeneratedCopy })
+    setHasUpdatedData(true)
+  }, [updateData])
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -42,43 +69,20 @@ export function WizardGenerating({ onNext }: WizardGeneratingProps) {
   }, [])
 
   useEffect(() => {
-    if (isComplete) {
-      // Generate mock copy data
-      const mockGeneratedCopy = {
-        headline: [
-          "Stunning Modern Home in Prime Location",
-          "Your Dream Home Awaits in This Beautiful Property",
-          "Exceptional Living in the Heart of the City",
-        ],
-        eyebrow: ["Just Listed", "New to Market", "Exclusive Opportunity"],
-        subCopy: [
-          "Discover luxury living at its finest",
-          "Where comfort meets elegance",
-          "Your perfect home is waiting",
-        ],
-        fullBio: [
-          "This exceptional property offers the perfect blend of modern amenities and timeless charm. Located in a highly sought-after neighborhood, this home features spacious rooms, updated finishes, and a beautiful outdoor space perfect for entertaining.",
-          "Welcome to your new home! This beautifully maintained property boasts an open floor plan, gourmet kitchen, and luxurious master suite. The private backyard oasis is perfect for relaxation and hosting gatherings with family and friends.",
-          "Step into luxury with this meticulously crafted home. Every detail has been thoughtfully designed to create a warm and inviting atmosphere. From the moment you walk through the front door, you'll feel right at home.",
-        ],
-        amenities: [
-          ["Updated Kitchen", "Spacious Bedrooms", "Private Backyard", "Garage Parking"],
-          ["Modern Appliances", "Walk-in Closets", "Outdoor Entertainment Area", "Storage Space"],
-          ["Premium Finishes", "Natural Light", "Landscaped Yard", "Convenient Location"],
-        ],
-        cta: ["Schedule Your Private Tour Today", "Book a Showing Now", "Contact Us for More Information"],
-      }
+    if (isComplete && !hasUpdatedData) {
+      generateMockData()
+    }
+  }, [isComplete, hasUpdatedData, generateMockData])
 
-      updateData({ generated_copy: mockGeneratedCopy })
-
-      // Auto-advance after showing completion
+  useEffect(() => {
+    if (isComplete && hasUpdatedData) {
       const timeout = setTimeout(() => {
         onNext()
       }, 2000)
 
       return () => clearTimeout(timeout)
     }
-  }, [isComplete, onNext, updateData])
+  }, [isComplete, hasUpdatedData, onNext])
 
   return (
     <div className="p-6 flex flex-col items-center justify-center min-h-96">
