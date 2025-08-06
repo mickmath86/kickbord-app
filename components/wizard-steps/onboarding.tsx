@@ -1,7 +1,8 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Sparkles, Home, Camera, Target, Zap } from 'lucide-react'
 
 interface WizardOnboardingProps {
   onNext: () => void
@@ -12,62 +13,88 @@ interface WizardOnboardingProps {
 }
 
 export function WizardOnboarding({ onNext }: WizardOnboardingProps) {
+  const features = [
+    {
+      icon: Home,
+      title: "Property Details",
+      description: "Tell us about your property's key features and specifications"
+    },
+    {
+      icon: Camera,
+      title: "Media Upload",
+      description: "Upload photos and videos to showcase your property"
+    },
+    {
+      icon: Target,
+      title: "Marketing Preferences",
+      description: "Choose your target audience and marketing style"
+    },
+    {
+      icon: Zap,
+      title: "AI Generation",
+      description: "Our AI creates personalized marketing materials instantly"
+    }
+  ]
+
   return (
-    <div className="max-w-6xl mx-auto">
-      <Card className="overflow-hidden">
-        <CardContent className="p-0">
-          <div className="grid md:grid-cols-2 min-h-[500px]">
-            {/* Left Side - Image */}
-            <div className="bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center p-8">
-              <img
-                src="/placeholder.svg?height=400&width=500&text=Real+Estate+Marketing"
-                alt="Real Estate Marketing"
-                className="max-w-full h-auto rounded-lg shadow-lg"
-              />
-            </div>
+    <div className="max-w-4xl mx-auto">
+      <div className="text-center mb-8">
+        <div className="flex justify-center mb-4">
+          <div className="p-3 bg-blue-100 rounded-full">
+            <Sparkles className="h-8 w-8 text-blue-600" />
+          </div>
+        </div>
+        <h1 className="text-3xl font-bold mb-4">Welcome to Kickbord's Listing Generator</h1>
+        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          Create professional marketing materials for your property listing in minutes with AI-powered content generation.
+        </p>
+      </div>
 
-            {/* Right Side - Content */}
-            <div className="flex flex-col justify-center p-8 lg:p-12">
-              <div className="space-y-6">
-                <div>
-                  <h1 className="text-3xl font-bold text-gray-900 mb-4">Let's Create Your Listing Campaign</h1>
-                  <p className="text-lg text-gray-600 leading-relaxed">
-                    We'll guide you through creating professional marketing materials for your property listing. In just
-                    a few steps, you'll have custom ads, brochures, and landing pages ready to attract potential buyers.
-                  </p>
+      <div className="grid md:grid-cols-2 gap-6 mb-8">
+        {features.map((feature, index) => {
+          const Icon = feature.icon
+          return (
+            <Card key={index} className="border-2 hover:border-blue-200 transition-colors">
+              <CardHeader>
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Icon className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <CardTitle className="text-lg">{feature.title}</CardTitle>
                 </div>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-base">
+                  {feature.description}
+                </CardDescription>
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 text-sm font-semibold">1</span>
-                    </div>
-                    <p className="text-gray-600">Enter your property details and upload photos</p>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 text-sm font-semibold">2</span>
-                    </div>
-                    <p className="text-gray-600">Choose your marketing style and tone preferences</p>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-blue-600 text-sm font-semibold">3</span>
-                    </div>
-                    <p className="text-gray-600">Review and customize your generated marketing copy</p>
-                  </div>
-                </div>
-
-                <div className="pt-6">
-                  <Button onClick={onNext} size="lg" className="bg-blue-600 hover:bg-blue-700 px-8">
-                    Let's Get Started
-                  </Button>
-                </div>
-              </div>
+      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+        <CardContent className="p-6">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold mb-2">What You'll Get</h3>
+            <div className="grid md:grid-cols-3 gap-4 text-sm text-muted-foreground">
+              <div>📱 Social media posts</div>
+              <div>📧 Email marketing templates</div>
+              <div>🌐 Landing page content</div>
+              <div>📄 Property descriptions</div>
+              <div>🎯 Targeted ad copy</div>
+              <div>✨ Professional branding</div>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      <div className="flex justify-center mt-8">
+        <Button onClick={onNext} size="lg" className="px-8">
+          Get Started
+          <Sparkles className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
     </div>
   )
 }
