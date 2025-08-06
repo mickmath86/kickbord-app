@@ -46,21 +46,20 @@ export function WizardCopyReview({ onNext, onPrevious }: WizardCopyReviewProps) 
 
   const handleCancel = () => {
     setEditingField(null)
-    setEditValues({})
   }
 
-  const handleRegenerateField = (field: string) => {
+  const handleRegenerate = (field: string) => {
     // Mock regeneration - in real app this would call AI API
     const regeneratedContent = {
       social_posts: [
-        `🌟 STUNNING NEW LISTING! This gorgeous ${data?.bedrooms}BR/${data?.bathrooms}BA ${data?.property_type} at ${data?.address} is everything you've been searching for! Features include ${data?.key_features?.slice(0, 2).join(" and ")}. Listed at $${data?.price?.toLocaleString()}. Book your showing today! #NewListing #DreamHome`,
-        `🏠 MARKET FRESH! Incredible ${data?.property_type} now available at ${data?.address}. This ${data?.bedrooms}-bedroom gem offers ${data?.key_features?.slice(0, 3).join(", ")} and more. Don't wait - properties like this move fast! #JustListed #RealEstate`
+        `🌟 STUNNING NEW LISTING! This gorgeous ${data?.bedrooms}BR/${data?.bathrooms}BA ${data?.property_type} at ${data?.address} is everything you've been searching for! Features include ${data?.key_features?.slice(0, 2).join(" and ")}. Listed at $${data?.price?.toLocaleString()}. Book your tour today! #NewListing #HomeForSale`,
+        `✨ PRICE TO SELL ✨ Beautiful ${data?.property_type} now available! This ${data?.bedrooms}-bedroom home offers ${data?.key_features?.slice(0, 3).join(", ")} and more. Perfect for first-time buyers or investors. Call now! #RealEstate #HomeOwnership`
       ],
-      property_description: `Discover the perfect blend of comfort and elegance in this remarkable ${data?.bedrooms}-bedroom, ${data?.bathrooms}-bathroom ${data?.property_type} at ${data?.address}. Featuring ${data?.key_features?.slice(0, 4).join(", ")}, this property offers exceptional value at $${data?.price?.toLocaleString()}. Schedule your private tour today.`,
-      email_subject: `Exclusive Listing - ${data?.address} | ${data?.bedrooms}BR/${data?.bathrooms}BA`,
-      email_body: `Dear Valued Client,\n\nI'm thrilled to present this exceptional ${data?.property_type} that just became available at ${data?.address}. This ${data?.bedrooms}-bedroom, ${data?.bathrooms}-bathroom home showcases ${data?.key_features?.slice(0, 3).join(", ")} and represents outstanding value at $${data?.price?.toLocaleString()}.\n\nI'd love to arrange a private showing at your convenience.`,
-      landing_page_headline: `Exceptional ${data?.property_type} at ${data?.address}`,
-      landing_page_subheading: `Experience luxury living in this ${data?.bedrooms}BR/${data?.bathrooms}BA home featuring ${data?.key_features?.slice(0, 2).join(" and ")}.`
+      property_description: `Discover the perfect blend of comfort and elegance in this remarkable ${data?.bedrooms}-bedroom, ${data?.bathrooms}-bathroom ${data?.property_type}. Nestled at ${data?.address}, this property showcases ${data?.key_features?.slice(0, 4).join(", ")} and countless other premium features. At $${data?.price?.toLocaleString()}, this represents an exceptional opportunity in today's competitive market.`,
+      email_subject: `🏡 Exclusive Listing - ${data?.address} | ${data?.bedrooms}BR/${data?.bathrooms}BA`,
+      email_body: `Dear Valued Client,\n\nI'm thrilled to present this exceptional ${data?.property_type} that has just become available. Located at ${data?.address}, this ${data?.bedrooms}-bedroom, ${data?.bathrooms}-bathroom home offers an impressive array of features including ${data?.key_features?.slice(0, 3).join(", ")}.\n\nPriced competitively at $${data?.price?.toLocaleString()}, this property represents outstanding value and won't remain on the market long.\n\nI'd love to schedule a private showing at your convenience.`,
+      landing_page_headline: `Exceptional Living Awaits at ${data?.address}`,
+      landing_page_subheading: `Experience luxury and comfort in this stunning ${data?.bedrooms}BR/${data?.bathrooms}BA ${data?.property_type} with ${data?.key_features?.slice(0, 2).join(" and ")}.`
     }
 
     updateData({
@@ -103,7 +102,7 @@ export function WizardCopyReview({ onNext, onPrevious }: WizardCopyReviewProps) 
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleRegenerateField(field)}
+                  onClick={() => handleRegenerate(field)}
                   className="h-8 px-2"
                 >
                   <RefreshCw className="h-3 w-3" />
@@ -149,7 +148,7 @@ export function WizardCopyReview({ onNext, onPrevious }: WizardCopyReviewProps) 
           )
         ) : (
           <div className="p-3 bg-muted rounded-md text-sm whitespace-pre-wrap">
-            {value}
+            {value || "No content generated"}
           </div>
         )}
       </div>
@@ -167,38 +166,46 @@ export function WizardCopyReview({ onNext, onPrevious }: WizardCopyReviewProps) 
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="social" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="social">Social Media</TabsTrigger>
+              <TabsTrigger value="description">Description</TabsTrigger>
               <TabsTrigger value="email">Email</TabsTrigger>
               <TabsTrigger value="landing">Landing Page</TabsTrigger>
-              <TabsTrigger value="description">Description</TabsTrigger>
+              <TabsTrigger value="overview">Overview</TabsTrigger>
             </TabsList>
 
             <TabsContent value="social" className="space-y-6">
               <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-lg font-semibold">Social Media Posts</h3>
-                  <Badge variant="secondary">{generatedCopy.social_posts?.length || 0} posts</Badge>
-                </div>
+                <h3 className="text-lg font-semibold">Social Media Posts</h3>
                 {generatedCopy.social_posts?.map((post: string, index: number) => (
                   <EditableField
-                    key={`social_post_${index}`}
+                    key={`social_${index}`}
                     field={`social_posts.${index}`}
                     value={post}
                     label={`Post ${index + 1}`}
                     multiline
                   />
-                ))}
+                )) || (
+                  <div className="text-muted-foreground">No social media posts generated</div>
+                )}
               </div>
+            </TabsContent>
+
+            <TabsContent value="description" className="space-y-6">
+              <EditableField
+                field="property_description"
+                value={generatedCopy.property_description || ""}
+                label="Property Description"
+                multiline
+              />
             </TabsContent>
 
             <TabsContent value="email" className="space-y-6">
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Email Campaign</h3>
                 <EditableField
                   field="email_subject"
                   value={generatedCopy.email_subject || ""}
-                  label="Subject Line"
+                  label="Email Subject Line"
                 />
                 <EditableField
                   field="email_body"
@@ -211,30 +218,67 @@ export function WizardCopyReview({ onNext, onPrevious }: WizardCopyReviewProps) 
 
             <TabsContent value="landing" className="space-y-6">
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Landing Page Content</h3>
                 <EditableField
                   field="landing_page_headline"
                   value={generatedCopy.landing_page_headline || ""}
-                  label="Main Headline"
+                  label="Landing Page Headline"
                 />
                 <EditableField
                   field="landing_page_subheading"
                   value={generatedCopy.landing_page_subheading || ""}
-                  label="Subheading"
+                  label="Landing Page Subheading"
                   multiline
                 />
               </div>
             </TabsContent>
 
-            <TabsContent value="description" className="space-y-6">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Property Description</h3>
-                <EditableField
-                  field="property_description"
-                  value={generatedCopy.property_description || ""}
-                  label="Full Description"
-                  multiline
-                />
+            <TabsContent value="overview" className="space-y-6">
+              <div className="grid gap-6">
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Content Summary</h3>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">Social Media</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Badge variant="secondary">
+                          {generatedCopy.social_posts?.length || 0} posts
+                        </Badge>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">Email Campaign</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Badge variant="secondary">
+                          {generatedCopy.email_subject ? "Ready" : "Not generated"}
+                        </Badge>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">Property Description</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Badge variant="secondary">
+                          {generatedCopy.property_description ? "Ready" : "Not generated"}
+                        </Badge>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">Landing Page</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <Badge variant="secondary">
+                          {generatedCopy.landing_page_headline ? "Ready" : "Not generated"}
+                        </Badge>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
               </div>
             </TabsContent>
           </Tabs>

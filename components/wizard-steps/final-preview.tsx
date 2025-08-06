@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { ArrowLeft, CheckCircle, Home, Mail, Globe, FileText, Calendar, DollarSign } from 'lucide-react'
+import { ArrowLeft, CheckCircle, Home, Mail, Globe, Share2, FileText, Loader2 } from 'lucide-react'
 import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
 import { useRouter } from "next/navigation"
 
@@ -27,13 +27,23 @@ export function WizardFinalPreview({ onPrevious, onClose }: WizardFinalPreviewPr
     setIsCreating(true)
     
     // Mock campaign creation - in real app this would save to database
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    
-    // Redirect to campaigns page
-    router.push("/dashboard/campaigns")
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // Redirect to campaigns page
+      router.push("/dashboard/campaigns")
+    } catch (error) {
+      console.error("Error creating campaign:", error)
+      setIsCreating(false)
+    }
   }
 
-  const generatedCopy = data?.generated_copy || {}
+  if (!data) {
+    return <div>Loading...</div>
+  }
+
+  const generatedCopy = data.generated_copy || {}
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -47,38 +57,37 @@ export function WizardFinalPreview({ onPrevious, onClose }: WizardFinalPreviewPr
             Review your complete marketing campaign before creating it
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className="space-y-8">
           {/* Property Summary */}
           <div className="bg-muted rounded-lg p-6">
             <div className="flex items-start justify-between">
               <div className="space-y-2">
-                <h3 className="text-xl font-semibold flex items-center gap-2">
-                  <Home className="h-5 w-5" />
-                  {data?.address}
-                </h3>
+                <h3 className="text-xl font-semibold">{data.address}</h3>
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span>{data?.bedrooms} bed</span>
+                  <span>{data.bedrooms} bed</span>
                   <span>•</span>
-                  <span>{data?.bathrooms} bath</span>
+                  <span>{data.bathrooms} bath</span>
                   <span>•</span>
-                  <span>{data?.square_feet?.toLocaleString()} sq ft</span>
-                  <span>•</span>
-                  <span>{data?.property_type}</span>
+                  <span>{data.square_feet?.toLocaleString()} sq ft</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <DollarSign className="h-4 w-4" />
-                  <span className="text-lg font-semibold">${data?.price?.toLocaleString()}</span>
+                  <Badge variant="secondary">{data.property_type}</Badge>
+                  <Badge variant="outline">${data.price?.toLocaleString()}</Badge>
                 </div>
               </div>
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
-                Ready to Launch
-              </Badge>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-green-600">
+                  ${data.price?.toLocaleString()}
+                </div>
+                <div className="text-sm text-muted-foreground">Listed Price</div>
+              </div>
             </div>
           </div>
 
           {/* Campaign Materials */}
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Generated Marketing Materials</h4>
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold">Generated Marketing Materials</h3>
+            
             <Tabs defaultValue="overview" className="space-y-4">
               <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -89,20 +98,22 @@ export function WizardFinalPreview({ onPrevious, onClose }: WizardFinalPreviewPr
               </TabsList>
 
               <TabsContent value="overview" className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base flex items-center gap-2">
-                        <FileText className="h-4 w-4" />
-                        Social Media Posts
+                        <Share2 className="h-4 w-4" />
+                        Social Media
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-2xl font-bold">{generatedCopy.social_posts?.length || 0}</p>
-                      <p className="text-sm text-muted-foreground">Ready to publish</p>
+                      <div className="text-2xl font-bold">
+                        {generatedCopy.social_posts?.length || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Posts ready</div>
                     </CardContent>
                   </Card>
-                  
+
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base flex items-center gap-2">
@@ -111,11 +122,11 @@ export function WizardFinalPreview({ onPrevious, onClose }: WizardFinalPreviewPr
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-2xl font-bold">1</p>
-                      <p className="text-sm text-muted-foreground">Template created</p>
+                      <div className="text-2xl font-bold text-green-600">✓</div>
+                      <div className="text-sm text-muted-foreground">Template ready</div>
                     </CardContent>
                   </Card>
-                  
+
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base flex items-center gap-2">
@@ -124,23 +135,45 @@ export function WizardFinalPreview({ onPrevious, onClose }: WizardFinalPreviewPr
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-2xl font-bold">1</p>
-                      <p className="text-sm text-muted-foreground">Page ready</p>
+                      <div className="text-2xl font-bold text-green-600">✓</div>
+                      <div className="text-sm text-muted-foreground">Content ready</div>
                     </CardContent>
                   </Card>
-                  
+
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        Launch Date
+                        <FileText className="h-4 w-4" />
+                        Description
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-2xl font-bold">Today</p>
-                      <p className="text-sm text-muted-foreground">Immediate</p>
+                      <div className="text-2xl font-bold text-green-600">✓</div>
+                      <div className="text-sm text-muted-foreground">Copy ready</div>
                     </CardContent>
                   </Card>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="font-medium">Campaign Features</h4>
+                  <div className="grid gap-2 md:grid-cols-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="text-sm">AI-optimized content</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="text-sm">Multi-platform ready</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="text-sm">Professional copywriting</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span className="text-sm">Brand-consistent messaging</span>
+                    </div>
+                  </div>
                 </div>
               </TabsContent>
 
@@ -148,31 +181,39 @@ export function WizardFinalPreview({ onPrevious, onClose }: WizardFinalPreviewPr
                 <div className="space-y-4">
                   {generatedCopy.social_posts?.map((post: string, index: number) => (
                     <Card key={index}>
-                      <CardHeader>
-                        <CardTitle className="text-base">Post {index + 1}</CardTitle>
+                      <CardHeader className="pb-3">
+                        <CardTitle className="text-base">Social Media Post {index + 1}</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-sm whitespace-pre-wrap">{post}</p>
+                        <div className="p-4 bg-muted rounded-lg text-sm whitespace-pre-wrap">
+                          {post}
+                        </div>
                       </CardContent>
                     </Card>
-                  ))}
+                  )) || (
+                    <div className="text-muted-foreground">No social media posts generated</div>
+                  )}
                 </div>
               </TabsContent>
 
               <TabsContent value="email" className="space-y-4">
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Email Campaign</CardTitle>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Email Subject</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <h5 className="font-medium mb-2">Subject Line</h5>
-                      <p className="text-sm bg-muted p-3 rounded">{generatedCopy.email_subject}</p>
+                  <CardContent>
+                    <div className="p-4 bg-muted rounded-lg text-sm">
+                      {generatedCopy.email_subject || "No subject generated"}
                     </div>
-                    <Separator />
-                    <div>
-                      <h5 className="font-medium mb-2">Email Body</h5>
-                      <p className="text-sm bg-muted p-3 rounded whitespace-pre-wrap">{generatedCopy.email_body}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Email Body</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="p-4 bg-muted rounded-lg text-sm whitespace-pre-wrap">
+                      {generatedCopy.email_body || "No email body generated"}
                     </div>
                   </CardContent>
                 </Card>
@@ -180,18 +221,22 @@ export function WizardFinalPreview({ onPrevious, onClose }: WizardFinalPreviewPr
 
               <TabsContent value="landing" className="space-y-4">
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">Landing Page Content</CardTitle>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Landing Page Headline</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <h5 className="font-medium mb-2">Main Headline</h5>
-                      <p className="text-sm bg-muted p-3 rounded">{generatedCopy.landing_page_headline}</p>
+                  <CardContent>
+                    <div className="p-4 bg-muted rounded-lg text-sm">
+                      {generatedCopy.landing_page_headline || "No headline generated"}
                     </div>
-                    <Separator />
-                    <div>
-                      <h5 className="font-medium mb-2">Subheading</h5>
-                      <p className="text-sm bg-muted p-3 rounded">{generatedCopy.landing_page_subheading}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Landing Page Subheading</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="p-4 bg-muted rounded-lg text-sm">
+                      {generatedCopy.landing_page_subheading || "No subheading generated"}
                     </div>
                   </CardContent>
                 </Card>
@@ -199,43 +244,43 @@ export function WizardFinalPreview({ onPrevious, onClose }: WizardFinalPreviewPr
 
               <TabsContent value="description" className="space-y-4">
                 <Card>
-                  <CardHeader>
+                  <CardHeader className="pb-3">
                     <CardTitle className="text-base">Property Description</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-sm bg-muted p-3 rounded whitespace-pre-wrap">{generatedCopy.property_description}</p>
+                    <div className="p-4 bg-muted rounded-lg text-sm whitespace-pre-wrap">
+                      {generatedCopy.property_description || "No description generated"}
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>
             </Tabs>
           </div>
 
-          {/* Key Features Summary */}
-          <div>
-            <h4 className="text-lg font-semibold mb-3">Key Features Highlighted</h4>
-            <div className="flex flex-wrap gap-2">
-              {data?.key_features?.map((feature, index) => (
-                <Badge key={index} variant="outline">{feature}</Badge>
-              ))}
-            </div>
-          </div>
+          <Separator />
 
           {/* Action Buttons */}
-          <div className="flex justify-between pt-6 border-t">
-            <Button variant="outline" onClick={onPrevious}>
+          <div className="flex justify-between">
+            <Button variant="outline" onClick={onPrevious} disabled={isCreating}>
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Edit
+              Previous
             </Button>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={onClose}>
+              <Button variant="outline" onClick={onClose} disabled={isCreating}>
                 Save as Draft
               </Button>
-              <Button 
-                onClick={handleCreateCampaign}
-                disabled={isCreating}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                {isCreating ? "Creating Campaign..." : "Create Campaign"}
+              <Button onClick={handleCreateCampaign} disabled={isCreating}>
+                {isCreating ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Creating Campaign...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Create Campaign
+                  </>
+                )}
               </Button>
             </div>
           </div>
