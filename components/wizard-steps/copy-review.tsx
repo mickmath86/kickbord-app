@@ -3,12 +3,12 @@
 import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, ArrowRight, Edit3, Check, X, RefreshCw } from "lucide-react"
+import { ArrowLeft, ArrowRight, Edit3, Check, X, RefreshCw } from 'lucide-react'
 import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
 
 interface WizardCopyReviewProps {
@@ -23,7 +23,6 @@ export function WizardCopyReview({ onNext, onPrevious }: WizardCopyReviewProps) 
   const { data, updateData } = useCampaignData()
   const [editingField, setEditingField] = useState<string | null>(null)
   const [editValues, setEditValues] = useState<Record<string, string>>({})
-  const [feedback, setFeedback] = useState<Record<string, string>>({})
 
   const generatedCopy = data?.generated_copy || {}
 
@@ -38,8 +37,8 @@ export function WizardCopyReview({ onNext, onPrevious }: WizardCopyReviewProps) 
       updateData({
         generated_copy: {
           ...generatedCopy,
-          [field]: newValue,
-        },
+          [field]: newValue
+        }
       })
     }
     setEditingField(null)
@@ -47,86 +46,110 @@ export function WizardCopyReview({ onNext, onPrevious }: WizardCopyReviewProps) 
 
   const handleCancel = () => {
     setEditingField(null)
+    setEditValues({})
   }
 
-  const handleRegenerate = (field: string) => {
-    // In a real app, this would call the AI API to regenerate
+  const handleRegenerateField = (field: string) => {
+    // Mock regeneration - in real app this would call AI API
     const regeneratedContent = {
       social_posts: [
-        `🌟 STUNNING NEW LISTING! This gorgeous ${data?.bedrooms}BR/${data?.bathrooms}BA ${data?.property_type} at ${data?.address} is everything you've been searching for! Features include ${data?.key_features?.slice(0, 2).join(" and ")}. Listed at $${data?.price?.toLocaleString()}. Book your tour today! #NewListing #HomeForSale`,
-        `🏠 DREAM HOME ALERT! Incredible ${data?.property_type} now available at ${data?.address}. This beauty boasts ${data?.key_features?.slice(0, 3).join(", ")} and so much more. Don't wait - homes like this sell fast! #DreamHome #RealEstate`,
+        `🌟 STUNNING NEW LISTING! This gorgeous ${data?.bedrooms}BR/${data?.bathrooms}BA ${data?.property_type} at ${data?.address} is everything you've been searching for! Features include ${data?.key_features?.slice(0, 2).join(" and ")}. Listed at $${data?.price?.toLocaleString()}. Book your showing today! #NewListing #DreamHome`,
+        `🏠 MARKET FRESH! Incredible ${data?.property_type} now available at ${data?.address}. This ${data?.bedrooms}-bedroom gem offers ${data?.key_features?.slice(0, 3).join(", ")} and more. Don't wait - properties like this move fast! #JustListed #RealEstate`
       ],
-      property_description: `Discover the perfect blend of luxury and comfort in this stunning ${data?.bedrooms}-bedroom, ${data?.bathrooms}-bathroom ${data?.property_type}. Nestled at ${data?.address}, this exceptional home features ${data?.key_features?.slice(0, 4).join(", ")}. At $${data?.price?.toLocaleString()}, this property offers unmatched value and endless possibilities.`,
+      property_description: `Discover the perfect blend of comfort and elegance in this remarkable ${data?.bedrooms}-bedroom, ${data?.bathrooms}-bathroom ${data?.property_type} at ${data?.address}. Featuring ${data?.key_features?.slice(0, 4).join(", ")}, this property offers exceptional value at $${data?.price?.toLocaleString()}. Schedule your private tour today.`,
       email_subject: `Exclusive Listing - ${data?.address} | ${data?.bedrooms}BR/${data?.bathrooms}BA`,
-      email_body: `I'm thrilled to present this exclusive new listing that perfectly matches your criteria. Located at ${data?.address}, this exceptional ${data?.property_type} offers ${data?.bedrooms} spacious bedrooms, ${data?.bathrooms} well-appointed bathrooms, and premium features including ${data?.key_features?.slice(0, 3).join(", ")}. Priced competitively at $${data?.price?.toLocaleString()}, this won't be on the market long.`,
-      landing_page_headline: `Exceptional Living at ${data?.address}`,
-      landing_page_subheading: `Experience luxury in this meticulously crafted ${data?.bedrooms}BR/${data?.bathrooms}BA ${data?.property_type} with ${data?.key_features?.slice(0, 2).join(" and ")}.`,
+      email_body: `Dear Valued Client,\n\nI'm thrilled to present this exceptional ${data?.property_type} that just became available at ${data?.address}. This ${data?.bedrooms}-bedroom, ${data?.bathrooms}-bathroom home showcases ${data?.key_features?.slice(0, 3).join(", ")} and represents outstanding value at $${data?.price?.toLocaleString()}.\n\nI'd love to arrange a private showing at your convenience.`,
+      landing_page_headline: `Exceptional ${data?.property_type} at ${data?.address}`,
+      landing_page_subheading: `Experience luxury living in this ${data?.bedrooms}BR/${data?.bathrooms}BA home featuring ${data?.key_features?.slice(0, 2).join(" and ")}.`
     }
 
     updateData({
       generated_copy: {
         ...generatedCopy,
-        ...regeneratedContent,
-      },
+        [field]: regeneratedContent[field as keyof typeof regeneratedContent]
+      }
     })
   }
 
-  const handleFeedback = (field: string, feedbackText: string) => {
-    setFeedback({ ...feedback, [field]: feedbackText })
-    updateData({
-      feedback: { ...data?.feedback, [field]: feedbackText },
-    })
-  }
-
-  const renderEditableField = (field: string, value: string, label: string, isTextarea = false) => {
+  const EditableField = ({ 
+    field, 
+    value, 
+    label, 
+    multiline = false 
+  }: { 
+    field: string
+    value: string
+    label: string
+    multiline?: boolean 
+  }) => {
     const isEditing = editingField === field
+    const currentValue = editValues[field] ?? value
 
     return (
-      <div className="space-y-3">
+      <div className="space-y-2">
         <div className="flex items-center justify-between">
           <Label className="text-sm font-medium">{label}</Label>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => handleRegenerate(field)} className="h-8">
-              <RefreshCw className="h-3 w-3 mr-1" />
-              Regenerate
-            </Button>
             {!isEditing && (
-              <Button variant="outline" size="sm" onClick={() => handleEdit(field, value)} className="h-8">
-                <Edit3 className="h-3 w-3 mr-1" />
-                Edit
-              </Button>
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleEdit(field, value)}
+                  className="h-8 px-2"
+                >
+                  <Edit3 className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleRegenerateField(field)}
+                  className="h-8 px-2"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                </Button>
+              </>
+            )}
+            {isEditing && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleSave(field)}
+                  className="h-8 px-2 text-green-600"
+                >
+                  <Check className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCancel}
+                  className="h-8 px-2 text-red-600"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              </>
             )}
           </div>
         </div>
-
         {isEditing ? (
-          <div className="space-y-2">
-            {isTextarea ? (
-              <Textarea
-                value={editValues[field] || value}
-                onChange={(e) => setEditValues({ ...editValues, [field]: e.target.value })}
-                className="min-h-[100px]"
-              />
-            ) : (
-              <Input
-                value={editValues[field] || value}
-                onChange={(e) => setEditValues({ ...editValues, [field]: e.target.value })}
-              />
-            )}
-            <div className="flex gap-2">
-              <Button size="sm" onClick={() => handleSave(field)}>
-                <Check className="h-3 w-3 mr-1" />
-                Save
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleCancel}>
-                <X className="h-3 w-3 mr-1" />
-                Cancel
-              </Button>
-            </div>
-          </div>
+          multiline ? (
+            <Textarea
+              value={currentValue}
+              onChange={(e) => setEditValues({ ...editValues, [field]: e.target.value })}
+              className="min-h-[100px]"
+              autoFocus
+            />
+          ) : (
+            <Input
+              value={currentValue}
+              onChange={(e) => setEditValues({ ...editValues, [field]: e.target.value })}
+              autoFocus
+            />
+          )
         ) : (
-          <div className="p-3 bg-muted rounded-lg">
-            <p className="text-sm whitespace-pre-wrap">{value}</p>
+          <div className="p-3 bg-muted rounded-md text-sm whitespace-pre-wrap">
+            {value}
           </div>
         )}
       </div>
@@ -137,10 +160,9 @@ export function WizardCopyReview({ onNext, onPrevious }: WizardCopyReviewProps) 
     <div className="max-w-4xl mx-auto">
       <Card>
         <CardHeader>
-          <CardTitle>Review & Edit Your Marketing Copy</CardTitle>
+          <CardTitle>Review & Edit Generated Content</CardTitle>
           <CardDescription>
-            Review the generated content and make any adjustments. You can edit any section or regenerate content you'd
-            like to improve.
+            Review the AI-generated marketing materials and make any adjustments needed
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -153,66 +175,70 @@ export function WizardCopyReview({ onNext, onPrevious }: WizardCopyReviewProps) 
             </TabsList>
 
             <TabsContent value="social" className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Social Media Posts</h3>
-                <div className="space-y-6">
-                  {generatedCopy.social_posts?.map((post: string, index: number) => (
-                    <div key={index}>
-                      {renderEditableField(`social_post_${index}`, post, `Post ${index + 1}`, true)}
-                      <div className="flex items-center gap-2 mt-2">
-                        <Badge variant="secondary">{post.length} characters</Badge>
-                        <Badge variant={post.length <= 280 ? "default" : "destructive"}>
-                          {post.length <= 280 ? "Twitter friendly" : "Too long for Twitter"}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-semibold">Social Media Posts</h3>
+                  <Badge variant="secondary">{generatedCopy.social_posts?.length || 0} posts</Badge>
                 </div>
+                {generatedCopy.social_posts?.map((post: string, index: number) => (
+                  <EditableField
+                    key={`social_post_${index}`}
+                    field={`social_posts.${index}`}
+                    value={post}
+                    label={`Post ${index + 1}`}
+                    multiline
+                  />
+                ))}
               </div>
             </TabsContent>
 
             <TabsContent value="email" className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Email Campaign</h3>
-                <div className="space-y-6">
-                  {renderEditableField("email_subject", generatedCopy.email_subject || "", "Subject Line")}
-                  {renderEditableField("email_body", generatedCopy.email_body || "", "Email Body", true)}
-                </div>
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Email Campaign</h3>
+                <EditableField
+                  field="email_subject"
+                  value={generatedCopy.email_subject || ""}
+                  label="Subject Line"
+                />
+                <EditableField
+                  field="email_body"
+                  value={generatedCopy.email_body || ""}
+                  label="Email Body"
+                  multiline
+                />
               </div>
             </TabsContent>
 
             <TabsContent value="landing" className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Landing Page Content</h3>
-                <div className="space-y-6">
-                  {renderEditableField(
-                    "landing_page_headline",
-                    generatedCopy.landing_page_headline || "",
-                    "Main Headline",
-                  )}
-                  {renderEditableField(
-                    "landing_page_subheading",
-                    generatedCopy.landing_page_subheading || "",
-                    "Subheading",
-                  )}
-                </div>
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Landing Page Content</h3>
+                <EditableField
+                  field="landing_page_headline"
+                  value={generatedCopy.landing_page_headline || ""}
+                  label="Main Headline"
+                />
+                <EditableField
+                  field="landing_page_subheading"
+                  value={generatedCopy.landing_page_subheading || ""}
+                  label="Subheading"
+                  multiline
+                />
               </div>
             </TabsContent>
 
             <TabsContent value="description" className="space-y-6">
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Property Description</h3>
-                {renderEditableField(
-                  "property_description",
-                  generatedCopy.property_description || "",
-                  "Full Description",
-                  true,
-                )}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Property Description</h3>
+                <EditableField
+                  field="property_description"
+                  value={generatedCopy.property_description || ""}
+                  label="Full Description"
+                  multiline
+                />
               </div>
             </TabsContent>
           </Tabs>
 
-          {/* Navigation */}
           <div className="flex justify-between pt-6 border-t">
             <Button variant="outline" onClick={onPrevious}>
               <ArrowLeft className="h-4 w-4 mr-2" />
