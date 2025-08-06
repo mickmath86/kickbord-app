@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Edit, Copy, CheckCircle, RefreshCw } from 'lucide-react'
+import { ThumbsUp, ThumbsDown, Edit, FileText, Mail, Printer, Share2 } from 'lucide-react'
 import { useCampaignData } from "@/app/dashboard/campaigns/create/context"
 
 interface WizardCopyReviewProps {
@@ -19,246 +19,209 @@ interface WizardCopyReviewProps {
 
 export function WizardCopyReview({ onNext, onPrevious }: WizardCopyReviewProps) {
   const { data, updateData } = useCampaignData()
-  const [editedContent, setEditedContent] = useState(data.generated_copy || {})
-  const [activeTab, setActiveTab] = useState("social")
+  const [activeTab, setActiveTab] = useState("description")
+  const [editingContent, setEditingContent] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<Record<string, string>>({})
 
-  const handleContentChange = (key: string, value: string) => {
-    setEditedContent(prev => ({ ...prev, [key]: value }))
+  const mockContent = {
+    description: "Discover your dream home in this stunning 3-bedroom, 2.5-bathroom residence nestled in a desirable neighborhood. This beautifully maintained property features an open-concept living space with hardwood floors, a gourmet kitchen with granite countertops, and a spacious master suite. The private backyard is perfect for entertaining, complete with a deck and mature landscaping. Located within walking distance of top-rated schools and parks, this home offers the perfect blend of comfort and convenience.",
+    social_posts: [
+      "🏡 NEW LISTING ALERT! Stunning 3BR/2.5BA home in prime location. Open concept living, gourmet kitchen, private backyard. Perfect for families! #JustListed #DreamHome #RealEstate",
+      "✨ OPEN HOUSE THIS WEEKEND! Don't miss this beautifully maintained home with hardwood floors and updated kitchen. Saturday 1-3pm. See you there! #OpenHouse #HomeForSale"
+    ],
+    email_template: "Subject: New Listing - Your Dream Home Awaits!\n\nDear [Name],\n\nI'm excited to share this exceptional property that just hit the market. This stunning 3-bedroom home offers everything you've been looking for...\n\nKey Features:\n• Open concept living space\n• Gourmet kitchen with granite counters\n• Private backyard with deck\n• Top-rated school district\n\nI'd love to schedule a private showing. Are you available this weekend?\n\nBest regards,\n[Your Name]",
+    flyer_content: "JUST LISTED\n$750,000\n\n3 Bedrooms | 2.5 Bathrooms | 2,000 sq ft\n\n✓ Open Concept Living\n✓ Gourmet Kitchen\n✓ Hardwood Floors\n✓ Private Backyard\n✓ Top Schools Nearby\n\nContact [Agent Name] for private showing\n[Phone] | [Email]"
   }
 
-  const handleNext = () => {
-    updateData({ selected_copy: editedContent })
-    onNext()
+  const contentTypes = [
+    { id: "description", label: "Property Description", icon: FileText, content: mockContent.description },
+    { id: "social", label: "Social Media", icon: Share2, content: mockContent.social_posts },
+    { id: "email", label: "Email Template", icon: Mail, content: mockContent.email_template },
+    { id: "flyer", label: "Print Flyer", icon: Printer, content: mockContent.flyer_content }
+  ]
+
+  const handleApprove = (contentType: string) => {
+    updateData({
+      selected_copy: {
+        ...data.selected_copy,
+        [contentType]: "approved"
+      }
+    })
   }
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text)
+  const handleReject = (contentType: string) => {
+    updateData({
+      selected_copy: {
+        ...data.selected_copy,
+        [contentType]: "rejected"
+      }
+    })
   }
 
-  const regenerateContent = (key: string) => {
-    // Simulate regeneration with slight variations
-    const variations = {
-      social_posts: [
-        `🏡 INCREDIBLE OPPORTUNITY! Beautiful ${data.bedrooms}BR/${data.bathrooms}BA ${data.property_type} now available at ${data.address}. Features ${data.key_features?.slice(0, 2).join(" and ")}. Listed at $${data.price?.toLocaleString()}. Call today! #NewListing #RealEstate`,
-        `✨ MUST SEE! This gorgeous ${data.property_type} at ${data.address} won't last long! ${data.bedrooms} bedrooms, ${data.bathrooms} bathrooms, plus ${data.key_features?.[0]}. Priced to sell at $${data.price?.toLocaleString()}. #JustListed #DreamHome`
-      ]
+  const handleEdit = (contentType: string) => {
+    setEditingContent(contentType)
+  }
+
+  const handleSaveEdit = (contentType: string) => {
+    setEditingContent(null)
+    updateData({
+      selected_copy: {
+        ...data.selected_copy,
+        [contentType]: "edited"
+      }
+    })
+  }
+
+  const handleFeedbackChange = (contentType: string, feedbackText: string) => {
+    setFeedback(prev => ({
+      ...prev,
+      [contentType]: feedbackText
+    }))
+    updateData({
+      feedback: {
+        ...data.feedback,
+        [contentType]: feedbackText
+      }
+    })
+  }
+
+  const getStatusBadge = (contentType: string) => {
+    const status = data.selected_copy?.[contentType]
+    switch (status) {
+      case "approved":
+        return <Badge className="bg-green-100 text-green-800">Approved</Badge>
+      case "rejected":
+        return <Badge className="bg-red-100 text-red-800">Needs Revision</Badge>
+      case "edited":
+        return <Badge className="bg-blue-100 text-blue-800">Edited</Badge>
+      default:
+        return <Badge variant="outline">Pending Review</Badge>
     }
-    
-    if (variations[key as keyof typeof variations]) {
-      handleContentChange(key, variations[key as keyof typeof variations].join('\n\n'))
-    }
-  }
-
-  if (!data.generated_copy) {
-    return <div>No generated content available</div>
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto p-6">
       <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold mb-2">Review & Edit Content</h2>
+        <h2 className="text-2xl font-bold mb-2">Review Your Marketing Content</h2>
         <p className="text-muted-foreground">
-          Review the generated marketing materials and make any adjustments
+          Review and approve the generated marketing materials, or request changes
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Edit className="h-5 w-5" />
-            Generated Marketing Materials
-          </CardTitle>
-          <CardDescription>
-            Click on any content to edit it. Your changes will be saved automatically.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="social">Social Posts</TabsTrigger>
-              <TabsTrigger value="description">Description</TabsTrigger>
-              <TabsTrigger value="email">Email</TabsTrigger>
-              <TabsTrigger value="landing">Landing Page</TabsTrigger>
-            </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="grid w-full grid-cols-4">
+          {contentTypes.map((type) => {
+            const Icon = type.icon
+            return (
+              <TabsTrigger key={type.id} value={type.id} className="flex items-center gap-2">
+                <Icon className="h-4 w-4" />
+                <span className="hidden sm:inline">{type.label}</span>
+              </TabsTrigger>
+            )
+          })}
+        </TabsList>
 
-            <TabsContent value="social" className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Social Media Posts</h3>
-                <div className="flex gap-2">
+        {contentTypes.map((type) => (
+          <TabsContent key={type.id} value={type.id}>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <type.icon className="h-5 w-5" />
+                      {type.label}
+                    </CardTitle>
+                    <CardDescription>
+                      Review the generated content and provide feedback
+                    </CardDescription>
+                  </div>
+                  {getStatusBadge(type.id)}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  {type.id === "social" ? (
+                    <div className="space-y-4">
+                      {(type.content as string[]).map((post, index) => (
+                        <div key={index} className="p-4 bg-gray-50 rounded-lg">
+                          <h4 className="font-medium mb-2">Social Post {index + 1}</h4>
+                          {editingContent === `${type.id}-${index}` ? (
+                            <Textarea
+                              value={post}
+                              onChange={() => {}}
+                              rows={3}
+                            />
+                          ) : (
+                            <p className="text-sm">{post}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      {editingContent === type.id ? (
+                        <Textarea
+                          value={type.content as string}
+                          onChange={() => {}}
+                          rows={8}
+                        />
+                      ) : (
+                        <pre className="whitespace-pre-wrap text-sm font-mono">
+                          {type.content as string}
+                        </pre>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-4">
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => regenerateContent('social_posts')}
+                    onClick={() => handleApprove(type.id)}
+                    variant={data.selected_copy?.[type.id] === "approved" ? "default" : "outline"}
+                    className="flex items-center gap-2"
                   >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Regenerate
+                    <ThumbsUp className="h-4 w-4" />
+                    Approve
+                  </Button>
+                  <Button
+                    onClick={() => handleReject(type.id)}
+                    variant={data.selected_copy?.[type.id] === "rejected" ? "destructive" : "outline"}
+                    className="flex items-center gap-2"
+                  >
+                    <ThumbsDown className="h-4 w-4" />
+                    Request Changes
+                  </Button>
+                  <Button
+                    onClick={() => editingContent === type.id ? handleSaveEdit(type.id) : handleEdit(type.id)}
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    {editingContent === type.id ? "Save" : "Edit"}
                   </Button>
                 </div>
-              </div>
-              <Textarea
-                value={editedContent.social_posts?.join('\n\n') || ''}
-                onChange={(e) => handleContentChange('social_posts', e.target.value.split('\n\n'))}
-                rows={8}
-                className="font-mono text-sm"
-              />
-              <div className="flex justify-between items-center">
-                <Badge variant="secondary">2 posts generated</Badge>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(editedContent.social_posts?.join('\n\n') || '')}
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy All
-                </Button>
-              </div>
-            </TabsContent>
 
-            <TabsContent value="description" className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Property Description</h3>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => regenerateContent('property_description')}
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Regenerate
-                </Button>
-              </div>
-              <Textarea
-                value={editedContent.property_description || ''}
-                onChange={(e) => handleContentChange('property_description', e.target.value)}
-                rows={6}
-                className="font-mono text-sm"
-              />
-              <div className="flex justify-between items-center">
-                <Badge variant="secondary">
-                  {editedContent.property_description?.length || 0} characters
-                </Badge>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(editedContent.property_description || '')}
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy
-                </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="email" className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Email Template</h3>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => regenerateContent('email_body')}
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Regenerate
-                </Button>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Subject Line</label>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Feedback or Revision Notes</label>
                   <Textarea
-                    value={editedContent.email_subject || ''}
-                    onChange={(e) => handleContentChange('email_subject', e.target.value)}
-                    rows={1}
-                    className="font-mono text-sm mt-1"
+                    placeholder="Any specific changes you'd like to see..."
+                    value={feedback[type.id] || ""}
+                    onChange={(e) => handleFeedbackChange(type.id, e.target.value)}
+                    rows={3}
                   />
                 </div>
-                <div>
-                  <label className="text-sm font-medium">Email Body</label>
-                  <Textarea
-                    value={editedContent.email_body || ''}
-                    onChange={(e) => handleContentChange('email_body', e.target.value)}
-                    rows={6}
-                    className="font-mono text-sm mt-1"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <Badge variant="secondary">Email template</Badge>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(`${editedContent.email_subject}\n\n${editedContent.email_body}`)}
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy Email
-                </Button>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="landing" className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">Landing Page Content</h3>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => regenerateContent('landing_page_headline')}
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Regenerate
-                </Button>
-              </div>
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium">Headline</label>
-                  <Textarea
-                    value={editedContent.landing_page_headline || ''}
-                    onChange={(e) => handleContentChange('landing_page_headline', e.target.value)}
-                    rows={2}
-                    className="font-mono text-sm mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-medium">Subheading</label>
-                  <Textarea
-                    value={editedContent.landing_page_subheading || ''}
-                    onChange={(e) => handleContentChange('landing_page_subheading', e.target.value)}
-                    rows={2}
-                    className="font-mono text-sm mt-1"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-between items-center">
-                <Badge variant="secondary">Landing page copy</Badge>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => copyToClipboard(`${editedContent.landing_page_headline}\n\n${editedContent.landing_page_subheading}`)}
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy Content
-                </Button>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-
-      <div className="mt-6 bg-muted rounded-lg p-4">
-        <h4 className="font-medium mb-2 flex items-center gap-2">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          Content Review Tips
-        </h4>
-        <ul className="text-sm text-muted-foreground space-y-1">
-          <li>• Make sure all property details are accurate</li>
-          <li>• Adjust the tone to match your brand voice</li>
-          <li>• Add any specific calls-to-action you prefer</li>
-          <li>• Consider your target audience when reviewing</li>
-        </ul>
-      </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ))}
+      </Tabs>
 
       <div className="flex justify-between mt-8">
         <Button variant="outline" onClick={onPrevious}>
           Back
         </Button>
-        <Button onClick={handleNext}>
-          Continue to Preview
+        <Button onClick={onNext}>
+          Continue to Final Preview
         </Button>
       </div>
     </div>

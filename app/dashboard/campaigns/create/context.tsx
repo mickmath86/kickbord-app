@@ -1,87 +1,89 @@
 "use client"
 
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, ReactNode } from "react"
 
 export interface CampaignData {
-  // Onboarding
-  agent_name?: string
-  agent_email?: string
-  agent_phone?: string
-  brokerage?: string
-  
-  // Property Address
-  address?: string
-  city?: string
-  state?: string
-  zip_code?: string
-  
-  // Property Basics
-  property_type?: string
-  bedrooms?: number
-  bathrooms?: number
-  square_feet?: number
-  lot_size?: string
-  year_built?: number
-  price?: number
-  
-  // Property Details
-  key_features?: string[]
-  property_condition?: string
-  recent_updates?: string[]
-  neighborhood_highlights?: string[]
-  
-  // Media Upload
-  photos?: File[]
-  virtual_tour_url?: string
-  video_url?: string
-  
+  // Property Information
+  property_type: string
+  address: string
+  price: number | null
+  bedrooms: number | null
+  bathrooms: number | null
+  square_feet: number | null
+  lot_size: string
+  year_built: number | null
+  key_features: string[]
+  keywords: string[]
+  additional_notes: string
+
+  // Media
+  photos: string[]
+  videos: string[]
+
   // Ad Preferences
-  target_audience?: string[]
-  marketing_tone?: string
-  budget_range?: string
-  materials_to_generate?: string[]
-  
+  materials_to_generate: string[]
+  creative_style: string
+  save_style: boolean
+  copy_tone: string[]
+  save_tone_default: boolean
+  listing_style: string[]
+  keywords_to_include: string
+
   // Generated Content
-  generated_copy?: {
-    social_posts?: string[]
-    property_description?: string
-    email_subject?: string
-    email_body?: string
-    landing_page_headline?: string
-    landing_page_subheading?: string
-  }
+  generated_copy: any
+  selected_copy: any
+  feedback: any
 }
 
-interface CampaignContextType {
+const initialData: CampaignData = {
+  property_type: "",
+  address: "",
+  price: null,
+  bedrooms: null,
+  bathrooms: null,
+  square_feet: null,
+  lot_size: "",
+  year_built: null,
+  key_features: [],
+  keywords: [],
+  additional_notes: "",
+  photos: [],
+  videos: [],
+  materials_to_generate: [],
+  creative_style: "",
+  save_style: false,
+  copy_tone: [],
+  save_tone_default: false,
+  listing_style: [],
+  keywords_to_include: "",
+  generated_copy: null,
+  selected_copy: {},
+  feedback: {},
+}
+
+const CampaignContext = createContext<{
   data: CampaignData
-  updateData: (newData: Partial<CampaignData>) => void
-  resetData: () => void
-}
+  updateData: (updates: Partial<CampaignData>) => void
+} | null>(null)
 
-const CampaignContext = createContext<CampaignContextType | undefined>(undefined)
+export const useCampaignData = () => {
+  const context = useContext(CampaignContext)
+  if (!context) {
+    throw new Error("useCampaignData must be used within CampaignProvider")
+  }
+  return context
+}
 
 export function CampaignProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<CampaignData>({})
+  const [campaignData, setCampaignData] = useState<CampaignData>(initialData)
 
-  const updateData = (newData: Partial<CampaignData>) => {
-    setData(prev => ({ ...prev, ...newData }))
-  }
-
-  const resetData = () => {
-    setData({})
+  const updateCampaignData = (updates: Partial<CampaignData>) => {
+    setCampaignData((prev) => ({ ...prev, ...updates }))
   }
 
   return (
-    <CampaignContext.Provider value={{ data, updateData, resetData }}>
+    <CampaignContext.Provider value={{ data: campaignData, updateData: updateCampaignData }}>
       {children}
     </CampaignContext.Provider>
   )
-}
-
-export function useCampaignData() {
-  const context = useContext(CampaignContext)
-  if (context === undefined) {
-    throw new Error('useCampaignData must be used within a CampaignProvider')
-  }
-  return context
 }

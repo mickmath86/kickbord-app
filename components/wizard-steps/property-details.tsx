@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { X, Plus, Star } from 'lucide-react'
+import { X, Plus, Home } from 'lucide-react'
 import { useCampaignData } from "@/app/dashboard/campaigns/create/context"
 
 interface WizardPropertyDetailsProps {
@@ -20,141 +20,74 @@ interface WizardPropertyDetailsProps {
 }
 
 const COMMON_FEATURES = [
-  "Updated Kitchen",
-  "Hardwood Floors",
-  "Granite Countertops",
-  "Stainless Steel Appliances",
-  "Walk-in Closet",
-  "Master Suite",
-  "Fireplace",
-  "Garage",
-  "Deck/Patio",
-  "Swimming Pool",
-  "Fenced Yard",
-  "New HVAC",
-  "Recently Renovated",
-  "Move-in Ready"
+  "Pool", "Garage", "Fireplace", "Hardwood Floors", "Updated Kitchen",
+  "Master Suite", "Walk-in Closet", "Patio/Deck", "Garden", "Storage",
+  "Laundry Room", "Home Office", "Basement", "Attic", "Security System"
 ]
 
 export function WizardPropertyDetails({ onNext, onPrevious }: WizardPropertyDetailsProps) {
   const { data, updateData } = useCampaignData()
-  const [formData, setFormData] = useState({
-    square_feet: data.square_feet || "",
-    lot_size: data.lot_size || "",
-    year_built: data.year_built || "",
-    key_features: data.key_features || [],
-    additional_notes: data.additional_notes || ""
-  })
   const [newFeature, setNewFeature] = useState("")
+  const [newKeyword, setNewKeyword] = useState("")
 
-  const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
-
-  const addFeature = (feature: string) => {
-    if (feature && !formData.key_features.includes(feature)) {
-      handleInputChange("key_features", [...formData.key_features, feature])
-    }
-  }
-
-  const removeFeature = (feature: string) => {
-    handleInputChange("key_features", formData.key_features.filter(f => f !== feature))
+  const handleFeatureToggle = (feature: string, checked: boolean) => {
+    const updatedFeatures = checked 
+      ? [...data.key_features, feature]
+      : data.key_features.filter(f => f !== feature)
+    updateData({ key_features: updatedFeatures })
   }
 
   const addCustomFeature = () => {
-    if (newFeature.trim()) {
-      addFeature(newFeature.trim())
+    if (newFeature.trim() && !data.key_features.includes(newFeature.trim())) {
+      updateData({ key_features: [...data.key_features, newFeature.trim()] })
       setNewFeature("")
     }
   }
 
-  const handleNext = () => {
-    updateData({
-      square_feet: formData.square_feet ? Number(formData.square_feet) : null,
-      lot_size: formData.lot_size,
-      year_built: formData.year_built ? Number(formData.year_built) : null,
-      key_features: formData.key_features,
-      additional_notes: formData.additional_notes
-    })
-    onNext()
+  const removeFeature = (feature: string) => {
+    updateData({ key_features: data.key_features.filter(f => f !== feature) })
+  }
+
+  const addKeyword = () => {
+    if (newKeyword.trim() && !data.keywords.includes(newKeyword.trim())) {
+      updateData({ keywords: [...data.keywords, newKeyword.trim()] })
+      setNewKeyword("")
+    }
+  }
+
+  const removeKeyword = (keyword: string) => {
+    updateData({ keywords: data.keywords.filter(k => k !== keyword) })
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-4xl mx-auto p-6">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-bold mb-2">Property Details</h2>
         <p className="text-muted-foreground">
-          Add more details to make your listing stand out
+          Add features and details that make your property special
         </p>
       </div>
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Property Specifications</CardTitle>
-            <CardDescription>
-              Optional details that help buyers understand your property better
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="square_feet">Square Feet</Label>
-                <Input
-                  id="square_feet"
-                  type="number"
-                  placeholder="2000"
-                  value={formData.square_feet}
-                  onChange={(e) => handleInputChange("square_feet", e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="year_built">Year Built</Label>
-                <Input
-                  id="year_built"
-                  type="number"
-                  placeholder="2010"
-                  value={formData.year_built}
-                  onChange={(e) => handleInputChange("year_built", e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lot_size">Lot Size</Label>
-              <Input
-                id="lot_size"
-                placeholder="0.25 acres or 10,890 sq ft"
-                value={formData.lot_size}
-                onChange={(e) => handleInputChange("lot_size", e.target.value)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Key Features */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Star className="h-5 w-5" />
+              <Home className="h-5 w-5" />
               Key Features
             </CardTitle>
             <CardDescription>
-              Select features that make your property special
+              Select features that highlight your property's best qualities
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-2">
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-2 gap-3">
               {COMMON_FEATURES.map((feature) => (
                 <div key={feature} className="flex items-center space-x-2">
                   <Checkbox
                     id={feature}
-                    checked={formData.key_features.includes(feature)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        addFeature(feature)
-                      } else {
-                        removeFeature(feature)
-                      }
-                    }}
+                    checked={data.key_features.includes(feature)}
+                    onCheckedChange={(checked) => handleFeatureToggle(feature, checked as boolean)}
                   />
                   <Label htmlFor={feature} className="text-sm">
                     {feature}
@@ -167,53 +100,94 @@ export function WizardPropertyDetails({ onNext, onPrevious }: WizardPropertyDeta
               <Label>Add Custom Feature</Label>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Enter custom feature"
+                  placeholder="e.g., Wine Cellar, Solar Panels"
                   value={newFeature}
                   onChange={(e) => setNewFeature(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && addCustomFeature()}
+                  onKeyPress={(e) => e.key === "Enter" && addCustomFeature()}
                 />
-                <Button type="button" variant="outline" onClick={addCustomFeature}>
+                <Button type="button" onClick={addCustomFeature} size="sm">
                   <Plus className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            {formData.key_features.length > 0 && (
+            {/* Custom Features */}
+            {data.key_features.filter(f => !COMMON_FEATURES.includes(f)).length > 0 && (
               <div className="space-y-2">
-                <Label>Selected Features</Label>
+                <Label>Custom Features</Label>
                 <div className="flex flex-wrap gap-2">
-                  {formData.key_features.map((feature) => (
-                    <Badge key={feature} variant="secondary" className="flex items-center gap-1">
-                      {feature}
-                      <button
-                        type="button"
-                        onClick={() => removeFeature(feature)}
-                        className="ml-1 hover:text-destructive"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
+                  {data.key_features
+                    .filter(f => !COMMON_FEATURES.includes(f))
+                    .map((feature) => (
+                      <Badge key={feature} variant="secondary" className="flex items-center gap-1">
+                        {feature}
+                        <button
+                          onClick={() => removeFeature(feature)}
+                          className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
                 </div>
               </div>
             )}
           </CardContent>
         </Card>
 
+        {/* Keywords and Notes */}
         <Card>
           <CardHeader>
-            <CardTitle>Additional Notes</CardTitle>
+            <CardTitle>Marketing Keywords & Notes</CardTitle>
             <CardDescription>
-              Any other important details about the property
+              Add keywords and additional details for marketing content
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <Textarea
-              placeholder="Recent updates, neighborhood highlights, special features, etc."
-              value={formData.additional_notes}
-              onChange={(e) => handleInputChange("additional_notes", e.target.value)}
-              rows={4}
-            />
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <Label>Marketing Keywords</Label>
+              <p className="text-sm text-muted-foreground">
+                Add phrases like "move-in ready", "quiet neighborhood", etc.
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="e.g., Move-in Ready, Quiet Street"
+                  value={newKeyword}
+                  onChange={(e) => setNewKeyword(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && addKeyword()}
+                />
+                <Button type="button" onClick={addKeyword} size="sm">
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {data.keywords.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {data.keywords.map((keyword) => (
+                    <Badge key={keyword} variant="outline" className="flex items-center gap-1">
+                      {keyword}
+                      <button
+                        onClick={() => removeKeyword(keyword)}
+                        className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="additional_notes">Additional Notes</Label>
+              <Textarea
+                id="additional_notes"
+                placeholder="Any additional information about the property, recent updates, neighborhood highlights, etc."
+                value={data.additional_notes}
+                onChange={(e) => updateData({ additional_notes: e.target.value })}
+                rows={6}
+              />
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -222,7 +196,7 @@ export function WizardPropertyDetails({ onNext, onPrevious }: WizardPropertyDeta
         <Button variant="outline" onClick={onPrevious}>
           Back
         </Button>
-        <Button onClick={handleNext}>
+        <Button onClick={onNext}>
           Continue
         </Button>
       </div>
