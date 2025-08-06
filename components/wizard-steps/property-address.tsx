@@ -1,11 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { MapPin, Search } from 'lucide-react'
 import { useCampaignData } from "@/app/dashboard/campaigns/create/context"
 
 interface WizardPropertyAddressProps {
@@ -18,88 +15,86 @@ interface WizardPropertyAddressProps {
 
 export function WizardPropertyAddress({ onNext, onPrevious }: WizardPropertyAddressProps) {
   const { data, updateData } = useCampaignData()
-  const [address, setAddress] = useState(data.address || "")
-  const [isValidating, setIsValidating] = useState(false)
 
-  const handleNext = async () => {
-    if (!address.trim()) return
-
-    setIsValidating(true)
-    // Simulate address validation
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    updateData({ address: address.trim() })
-    setIsValidating(false)
-    onNext()
+  const handleInputChange = (field: string, value: string) => {
+    updateData({ [field]: value })
   }
 
-  const canProceed = address.trim().length > 0
+  const handleNext = () => {
+    if (data.address && data.city && data.state && data.zip_code) {
+      onNext()
+    }
+  }
+
+  const isValid = data.address && data.city && data.state && data.zip_code
 
   return (
     <div className="max-w-2xl mx-auto">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-bold mb-2">Property Address</h2>
-        <p className="text-muted-foreground">
-          Enter the complete address of the property you want to market
-        </p>
-      </div>
-
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <MapPin className="h-5 w-5" />
-            Property Location
-          </CardTitle>
+          <CardTitle>Property Address</CardTitle>
           <CardDescription>
-            We'll use this address to gather market data and create location-specific content
+            Enter the complete address of the property you're listing
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="address">Full Address</Label>
-            <div className="relative">
-              <Input
-                id="address"
-                placeholder="123 Main Street, City, State 12345"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className="pl-10"
-              />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Include street number, street name, city, state, and ZIP code
-            </p>
+            <Label htmlFor="address">Street Address *</Label>
+            <Input
+              id="address"
+              value={data.address || ""}
+              onChange={(e) => handleInputChange("address", e.target.value)}
+              placeholder="123 Main Street"
+            />
           </div>
 
-          {address && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h4 className="font-medium text-blue-900 mb-2">Address Preview</h4>
-              <p className="text-blue-800">{address}</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="city">City *</Label>
+              <Input
+                id="city"
+                value={data.city || ""}
+                onChange={(e) => handleInputChange("city", e.target.value)}
+                placeholder="San Francisco"
+              />
             </div>
-          )}
+            <div className="space-y-2">
+              <Label htmlFor="state">State *</Label>
+              <Input
+                id="state"
+                value={data.state || ""}
+                onChange={(e) => handleInputChange("state", e.target.value)}
+                placeholder="CA"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="zip_code">ZIP Code *</Label>
+              <Input
+                id="zip_code"
+                value={data.zip_code || ""}
+                onChange={(e) => handleInputChange("zip_code", e.target.value)}
+                placeholder="94102"
+              />
+            </div>
+          </div>
 
-          <div className="bg-muted rounded-lg p-4">
-            <h4 className="font-medium mb-2">💡 Pro Tip</h4>
-            <p className="text-sm text-muted-foreground">
-              Make sure the address is accurate - we'll use it to pull neighborhood data, 
-              comparable sales, and create location-specific marketing content.
-            </p>
+          <div className="flex justify-between">
+            <button
+              onClick={onPrevious}
+              className="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Back
+            </button>
+            <button
+              onClick={handleNext}
+              disabled={!isValid}
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Continue
+            </button>
           </div>
         </CardContent>
       </Card>
-
-      <div className="flex justify-between mt-8">
-        <Button variant="outline" onClick={onPrevious}>
-          Back
-        </Button>
-        <Button 
-          onClick={handleNext} 
-          disabled={!canProceed || isValidating}
-        >
-          {isValidating ? "Validating..." : "Continue"}
-        </Button>
-      </div>
     </div>
   )
 }

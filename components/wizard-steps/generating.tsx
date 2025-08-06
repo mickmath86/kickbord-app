@@ -98,7 +98,6 @@ export function WizardGenerating({ onNext }: WizardGeneratingProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
-          {/* Progress Bar */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="font-medium">Overall Progress</span>
@@ -107,7 +106,6 @@ export function WizardGenerating({ onNext }: WizardGeneratingProps) {
             <Progress value={progress} className="h-3" />
           </div>
 
-          {/* Current Step Highlight */}
           <div className="text-center space-y-4">
             <div className="flex justify-center">
               <div className="p-4 bg-blue-100 rounded-full">
@@ -126,13 +124,11 @@ export function WizardGenerating({ onNext }: WizardGeneratingProps) {
             </div>
           </div>
 
-          {/* Steps List */}
           <div className="space-y-3">
             {GENERATION_STEPS.map((step, index) => {
               const Icon = step.icon
               const isCompleted = completedSteps.includes(index)
               const isCurrent = index === currentStep
-              const isPending = index > currentStep
 
               return (
                 <div
@@ -174,7 +170,6 @@ export function WizardGenerating({ onNext }: WizardGeneratingProps) {
             })}
           </div>
 
-          {/* Property Summary */}
           <div className="bg-muted rounded-lg p-4">
             <h4 className="font-medium mb-3">Creating materials for:</h4>
             <div className="space-y-1 text-sm">
@@ -186,7 +181,6 @@ export function WizardGenerating({ onNext }: WizardGeneratingProps) {
             </div>
           </div>
 
-          {/* Fun Fact */}
           <div className="text-center text-sm text-muted-foreground bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p>
               💡 <strong>Did you know?</strong> Our AI analyzes over 50 data points to create 
