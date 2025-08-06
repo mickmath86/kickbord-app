@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { MapPin, Search } from 'lucide-react'
-import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
+import { useCampaignData } from "@/app/dashboard/campaigns/create/context"
 
 interface WizardPropertyAddressProps {
   onNext: () => void

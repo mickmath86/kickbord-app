@@ -1,9 +1,9 @@
 "use client"
 
-import { useState, createContext, useContext } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft } from 'lucide-react'
 import { useRouter } from "next/navigation"
 import { WizardOnboarding } from "@/components/wizard-steps/onboarding"
 import { WizardPropertyAddress } from "@/components/wizard-steps/property-address"
@@ -14,6 +14,7 @@ import { WizardAdPreferences } from "@/components/wizard-steps/ad-preferences"
 import { WizardGenerating } from "@/components/wizard-steps/generating"
 import { WizardCopyReview } from "@/components/wizard-steps/copy-review"
 import { WizardFinalPreview } from "@/components/wizard-steps/final-preview"
+import { CampaignContext } from "./context"
 
 export interface CampaignData {
   // Property Information
@@ -85,20 +86,6 @@ const steps = [
   { id: 8, title: "Copy Review", phase: 2, component: WizardCopyReview },
   { id: 9, title: "Final Preview", phase: 2, component: WizardFinalPreview },
 ]
-
-// Context for sharing data between steps
-const CampaignContext = createContext<{
-  data: CampaignData
-  updateData: (updates: Partial<CampaignData>) => void
-} | null>(null)
-
-export const useCampaignData = () => {
-  const context = useContext(CampaignContext)
-  if (!context) {
-    throw new Error("useCampaignData must be used within CampaignWizard")
-  }
-  return context
-}
 
 export default function CreateCampaignPage() {
   const router = useRouter()

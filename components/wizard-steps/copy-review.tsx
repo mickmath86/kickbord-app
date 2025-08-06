@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Edit, Copy, CheckCircle, RefreshCw } from 'lucide-react'
-import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
+import { useCampaignData } from "@/app/dashboard/campaigns/create/context"
 
 interface WizardCopyReviewProps {
   onNext: () => void

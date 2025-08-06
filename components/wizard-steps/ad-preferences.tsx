@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Settings, Target, Palette, MessageSquare } from 'lucide-react'
-import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
+import { useCampaignData } from "@/app/dashboard/campaigns/create/context"
 
 interface WizardAdPreferencesProps {
   onNext: () => void

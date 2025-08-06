@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { X, Plus, Star } from 'lucide-react'
-import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
+import { useCampaignData } from "@/app/dashboard/campaigns/create/context"
 
 interface WizardPropertyDetailsProps {
   onNext: () => void

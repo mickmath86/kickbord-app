@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { CheckCircle, Download, Share, Eye, Rocket } from 'lucide-react'
-import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
+import { useCampaignData } from "@/app/dashboard/campaigns/create/context"
 
 interface WizardFinalPreviewProps {
   onNext: () => void
