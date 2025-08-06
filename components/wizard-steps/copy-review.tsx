@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Edit, Check, RefreshCw } from 'lucide-react'
+import { Edit, Copy, CheckCircle, RefreshCw } from 'lucide-react'
 import { useCampaignData } from "@/app/dashboard/campaigns/create/page"
 
 interface WizardCopyReviewProps {
@@ -19,441 +19,248 @@ interface WizardCopyReviewProps {
 
 export function WizardCopyReview({ onNext, onPrevious }: WizardCopyReviewProps) {
   const { data, updateData } = useCampaignData()
-  const [editingContent, setEditingContent] = useState<{[key: string]: string}>({})
+  const [editedContent, setEditedContent] = useState(data.generated_copy || {})
   const [activeTab, setActiveTab] = useState("social")
 
-  const generatedContent = data.generated_copy || {}
-
-  const handleEdit = (contentType: string, value: string) => {
-    setEditingContent(prev => ({ ...prev, [contentType]: value }))
-  }
-
-  const handleSave = (contentType: string) => {
-    const updatedContent = {
-      ...generatedContent,
-      [contentType]: editingContent[contentType]
-    }
-    updateData({ generated_copy: updatedContent })
-    setEditingContent(prev => {
-      const updated = { ...prev }
-      delete updated[contentType]
-      return updated
-    })
-  }
-
-  const handleRegenerate = (contentType: string) => {
-    // Simulate regeneration
-    const regeneratedContent = {
-      ...generatedContent,
-      [contentType]: `[Regenerated] ${generatedContent[contentType]}`
-    }
-    updateData({ generated_copy: regeneratedContent })
-  }
-
-  const isEditing = (contentType: string) => contentType in editingContent
-
-  const getDisplayContent = (contentType: string) => {
-    return isEditing(contentType) ? editingContent[contentType] : generatedContent[contentType]
+  const handleContentChange = (key: string, value: string) => {
+    setEditedContent(prev => ({ ...prev, [key]: value }))
   }
 
   const handleNext = () => {
-    // Save any pending edits
-    const finalContent = { ...generatedContent }
-    Object.keys(editingContent).forEach(key => {
-      finalContent[key] = editingContent[key]
-    })
-    updateData({ generated_copy: finalContent })
+    updateData({ selected_copy: editedContent })
     onNext()
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text)
+  }
+
+  const regenerateContent = (key: string) => {
+    // Simulate regeneration with slight variations
+    const variations = {
+      social_posts: [
+        `🏡 INCREDIBLE OPPORTUNITY! Beautiful ${data.bedrooms}BR/${data.bathrooms}BA ${data.property_type} now available at ${data.address}. Features ${data.key_features?.slice(0, 2).join(" and ")}. Listed at $${data.price?.toLocaleString()}. Call today! #NewListing #RealEstate`,
+        `✨ MUST SEE! This gorgeous ${data.property_type} at ${data.address} won't last long! ${data.bedrooms} bedrooms, ${data.bathrooms} bathrooms, plus ${data.key_features?.[0]}. Priced to sell at $${data.price?.toLocaleString()}. #JustListed #DreamHome`
+      ]
+    }
+    
+    if (variations[key as keyof typeof variations]) {
+      handleContentChange(key, variations[key as keyof typeof variations].join('\n\n'))
+    }
+  }
+
+  if (!data.generated_copy) {
+    return <div>No generated content available</div>
   }
 
   return (
     <div className="max-w-4xl mx-auto">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold mb-2">Review & Edit Content</h2>
+        <p className="text-muted-foreground">
+          Review the generated marketing materials and make any adjustments
+        </p>
+      </div>
+
       <Card>
-        <CardHeader className="text-center">
-          <CardTitle>Review & Edit Your Content</CardTitle>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Edit className="h-5 w-5" />
+            Generated Marketing Materials
+          </CardTitle>
           <CardDescription>
-            Review the generated marketing materials and make any adjustments
+            Click on any content to edit it. Your changes will be saved automatically.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="social">Social Posts</TabsTrigger>
-              <TabsTrigger value="email">Email</TabsTrigger>
               <TabsTrigger value="description">Description</TabsTrigger>
+              <TabsTrigger value="email">Email</TabsTrigger>
               <TabsTrigger value="landing">Landing Page</TabsTrigger>
             </TabsList>
 
             <TabsContent value="social" className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold">Social Media Posts</h3>
-                  <Badge variant="secondary">2 posts generated</Badge>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Social Media Posts</h3>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => regenerateContent('social_posts')}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Regenerate
+                  </Button>
                 </div>
-                
-                {generatedContent.social_posts?.map((post: string, index: number) => (
-                  <Card key={index}>
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <h4 className="font-medium">Post {index + 1}</h4>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleEdit(`social_post_${index}`, post)}
-                          >
-                            <Edit className="h-4 w-4 mr-1" />
-                            Edit
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRegenerate(`social_post_${index}`)}
-                          >
-                            <RefreshCw className="h-4 w-4 mr-1" />
-                            Regenerate
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      {isEditing(`social_post_${index}`) ? (
-                        <div className="space-y-3">
-                          <Textarea
-                            value={getDisplayContent(`social_post_${index}`)}
-                            onChange={(e) => handleEdit(`social_post_${index}`, e.target.value)}
-                            rows={4}
-                          />
-                          <div className="flex gap-2">
-                            <Button size="sm" onClick={() => handleSave(`social_post_${index}`)}>
-                              <Check className="h-4 w-4 mr-1" />
-                              Save
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              onClick={() => setEditingContent(prev => {
-                                const updated = { ...prev }
-                                delete updated[`social_post_${index}`]
-                                return updated
-                              })}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-sm whitespace-pre-wrap">{post}</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
               </div>
-            </TabsContent>
-
-            <TabsContent value="email" className="space-y-4">
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Email Marketing</h3>
-                
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <h4 className="font-medium">Subject Line</h4>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit('email_subject', generatedContent.email_subject)}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRegenerate('email_subject')}
-                        >
-                          <RefreshCw className="h-4 w-4 mr-1" />
-                          Regenerate
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {isEditing('email_subject') ? (
-                      <div className="space-y-3">
-                        <Textarea
-                          value={getDisplayContent('email_subject')}
-                          onChange={(e) => handleEdit('email_subject', e.target.value)}
-                          rows={2}
-                        />
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={() => handleSave('email_subject')}>
-                            <Check className="h-4 w-4 mr-1" />
-                            Save
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setEditingContent(prev => {
-                              const updated = { ...prev }
-                              delete updated.email_subject
-                              return updated
-                            })}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm font-medium">{generatedContent.email_subject}</p>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <h4 className="font-medium">Email Body</h4>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit('email_body', generatedContent.email_body)}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRegenerate('email_body')}
-                        >
-                          <RefreshCw className="h-4 w-4 mr-1" />
-                          Regenerate
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {isEditing('email_body') ? (
-                      <div className="space-y-3">
-                        <Textarea
-                          value={getDisplayContent('email_body')}
-                          onChange={(e) => handleEdit('email_body', e.target.value)}
-                          rows={6}
-                        />
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={() => handleSave('email_body')}>
-                            <Check className="h-4 w-4 mr-1" />
-                            Save
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setEditingContent(prev => {
-                              const updated = { ...prev }
-                              delete updated.email_body
-                              return updated
-                            })}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm whitespace-pre-wrap">{generatedContent.email_body}</p>
-                    )}
-                  </CardContent>
-                </Card>
+              <Textarea
+                value={editedContent.social_posts?.join('\n\n') || ''}
+                onChange={(e) => handleContentChange('social_posts', e.target.value.split('\n\n'))}
+                rows={8}
+                className="font-mono text-sm"
+              />
+              <div className="flex justify-between items-center">
+                <Badge variant="secondary">2 posts generated</Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyToClipboard(editedContent.social_posts?.join('\n\n') || '')}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy All
+                </Button>
               </div>
             </TabsContent>
 
             <TabsContent value="description" className="space-y-4">
-              <div className="space-y-4">
+              <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Property Description</h3>
-                
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <h4 className="font-medium">Listing Description</h4>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit('property_description', generatedContent.property_description)}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRegenerate('property_description')}
-                        >
-                          <RefreshCw className="h-4 w-4 mr-1" />
-                          Regenerate
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {isEditing('property_description') ? (
-                      <div className="space-y-3">
-                        <Textarea
-                          value={getDisplayContent('property_description')}
-                          onChange={(e) => handleEdit('property_description', e.target.value)}
-                          rows={6}
-                        />
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={() => handleSave('property_description')}>
-                            <Check className="h-4 w-4 mr-1" />
-                            Save
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setEditingContent(prev => {
-                              const updated = { ...prev }
-                              delete updated.property_description
-                              return updated
-                            })}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm whitespace-pre-wrap">{generatedContent.property_description}</p>
-                    )}
-                  </CardContent>
-                </Card>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => regenerateContent('property_description')}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Regenerate
+                </Button>
+              </div>
+              <Textarea
+                value={editedContent.property_description || ''}
+                onChange={(e) => handleContentChange('property_description', e.target.value)}
+                rows={6}
+                className="font-mono text-sm"
+              />
+              <div className="flex justify-between items-center">
+                <Badge variant="secondary">
+                  {editedContent.property_description?.length || 0} characters
+                </Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyToClipboard(editedContent.property_description || '')}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy
+                </Button>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="email" className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Email Template</h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => regenerateContent('email_body')}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Regenerate
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Subject Line</label>
+                  <Textarea
+                    value={editedContent.email_subject || ''}
+                    onChange={(e) => handleContentChange('email_subject', e.target.value)}
+                    rows={1}
+                    className="font-mono text-sm mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Email Body</label>
+                  <Textarea
+                    value={editedContent.email_body || ''}
+                    onChange={(e) => handleContentChange('email_body', e.target.value)}
+                    rows={6}
+                    className="font-mono text-sm mt-1"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-between items-center">
+                <Badge variant="secondary">Email template</Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyToClipboard(`${editedContent.email_subject}\n\n${editedContent.email_body}`)}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy Email
+                </Button>
               </div>
             </TabsContent>
 
             <TabsContent value="landing" className="space-y-4">
-              <div className="space-y-4">
+              <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Landing Page Content</h3>
-                
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <h4 className="font-medium">Headline</h4>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit('landing_page_headline', generatedContent.landing_page_headline)}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRegenerate('landing_page_headline')}
-                        >
-                          <RefreshCw className="h-4 w-4 mr-1" />
-                          Regenerate
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {isEditing('landing_page_headline') ? (
-                      <div className="space-y-3">
-                        <Textarea
-                          value={getDisplayContent('landing_page_headline')}
-                          onChange={(e) => handleEdit('landing_page_headline', e.target.value)}
-                          rows={2}
-                        />
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={() => handleSave('landing_page_headline')}>
-                            <Check className="h-4 w-4 mr-1" />
-                            Save
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setEditingContent(prev => {
-                              const updated = { ...prev }
-                              delete updated.landing_page_headline
-                              return updated
-                            })}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-lg font-semibold">{generatedContent.landing_page_headline}</p>
-                    )}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <h4 className="font-medium">Subheading</h4>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleEdit('landing_page_subheading', generatedContent.landing_page_subheading)}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Edit
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleRegenerate('landing_page_subheading')}
-                        >
-                          <RefreshCw className="h-4 w-4 mr-1" />
-                          Regenerate
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {isEditing('landing_page_subheading') ? (
-                      <div className="space-y-3">
-                        <Textarea
-                          value={getDisplayContent('landing_page_subheading')}
-                          onChange={(e) => handleEdit('landing_page_subheading', e.target.value)}
-                          rows={3}
-                        />
-                        <div className="flex gap-2">
-                          <Button size="sm" onClick={() => handleSave('landing_page_subheading')}>
-                            <Check className="h-4 w-4 mr-1" />
-                            Save
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setEditingContent(prev => {
-                              const updated = { ...prev }
-                              delete updated.landing_page_subheading
-                              return updated
-                            })}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">{generatedContent.landing_page_subheading}</p>
-                    )}
-                  </CardContent>
-                </Card>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => regenerateContent('landing_page_headline')}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Regenerate
+                </Button>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Headline</label>
+                  <Textarea
+                    value={editedContent.landing_page_headline || ''}
+                    onChange={(e) => handleContentChange('landing_page_headline', e.target.value)}
+                    rows={2}
+                    className="font-mono text-sm mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Subheading</label>
+                  <Textarea
+                    value={editedContent.landing_page_subheading || ''}
+                    onChange={(e) => handleContentChange('landing_page_subheading', e.target.value)}
+                    rows={2}
+                    className="font-mono text-sm mt-1"
+                  />
+                </div>
+              </div>
+              <div className="flex justify-between items-center">
+                <Badge variant="secondary">Landing page copy</Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyToClipboard(`${editedContent.landing_page_headline}\n\n${editedContent.landing_page_subheading}`)}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy Content
+                </Button>
               </div>
             </TabsContent>
           </Tabs>
-
-          <div className="flex justify-between pt-6">
-            <Button variant="outline" onClick={onPrevious}>
-              Back
-            </Button>
-            <Button onClick={handleNext}>
-              Continue to Preview
-            </Button>
-          </div>
         </CardContent>
       </Card>
+
+      <div className="mt-6 bg-muted rounded-lg p-4">
+        <h4 className="font-medium mb-2 flex items-center gap-2">
+          <CheckCircle className="h-4 w-4 text-green-600" />
+          Content Review Tips
+        </h4>
+        <ul className="text-sm text-muted-foreground space-y-1">
+          <li>• Make sure all property details are accurate</li>
+          <li>• Adjust the tone to match your brand voice</li>
+          <li>• Add any specific calls-to-action you prefer</li>
+          <li>• Consider your target audience when reviewing</li>
+        </ul>
+      </div>
+
+      <div className="flex justify-between mt-8">
+        <Button variant="outline" onClick={onPrevious}>
+          Back
+        </Button>
+        <Button onClick={handleNext}>
+          Continue to Preview
+        </Button>
+      </div>
     </div>
   )
 }

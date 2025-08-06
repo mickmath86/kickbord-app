@@ -111,7 +111,7 @@ export function WizardGenerating({ onNext }: WizardGeneratingProps) {
           <div className="text-center space-y-4">
             <div className="flex justify-center">
               <div className="p-4 bg-blue-100 rounded-full">
-                {GENERATION_STEPS[currentStep] && (\
+                {GENERATION_STEPS[currentStep] && (
                   <GENERATION_STEPS[currentStep].icon className="h-8 w-8 text-blue-600" />
                 )}
               </div>

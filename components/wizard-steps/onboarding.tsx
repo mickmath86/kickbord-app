@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Sparkles, Home, Camera, Target, Zap } from 'lucide-react'
+import { CheckCircle, Sparkles, Zap, Target } from 'lucide-react'
 
 interface WizardOnboardingProps {
   onNext: () => void
@@ -13,87 +13,128 @@ interface WizardOnboardingProps {
 }
 
 export function WizardOnboarding({ onNext }: WizardOnboardingProps) {
-  const features = [
-    {
-      icon: Home,
-      title: "Property Details",
-      description: "Tell us about your property's key features and specifications"
-    },
-    {
-      icon: Camera,
-      title: "Media Upload",
-      description: "Upload photos and videos to showcase your property"
-    },
-    {
-      icon: Target,
-      title: "Marketing Preferences",
-      description: "Choose your target audience and marketing style"
-    },
-    {
-      icon: Zap,
-      title: "AI Generation",
-      description: "Our AI creates personalized marketing materials instantly"
-    }
-  ]
-
   return (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-8">
-        <div className="flex justify-center mb-4">
-          <div className="p-3 bg-blue-100 rounded-full">
-            <Sparkles className="h-8 w-8 text-blue-600" />
-          </div>
-        </div>
-        <h1 className="text-3xl font-bold mb-4">Welcome to Kickbord's Listing Generator</h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Create professional marketing materials for your property listing in minutes with AI-powered content generation.
+        <h1 className="text-3xl font-bold mb-4">Create Your Listing Campaign</h1>
+        <p className="text-lg text-muted-foreground">
+          Let's create compelling marketing materials for your property in just a few steps
         </p>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6 mb-8">
-        {features.map((feature, index) => {
-          const Icon = feature.icon
-          return (
-            <Card key={index} className="border-2 hover:border-blue-200 transition-colors">
-              <CardHeader>
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <Icon className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <CardTitle className="text-lg">{feature.title}</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-base">
-                  {feature.description}
-                </CardDescription>
-              </CardContent>
-            </Card>
-          )
-        })}
+      <div className="grid md:grid-cols-2 gap-8 mb-8">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-blue-600" />
+              AI-Powered Content
+            </CardTitle>
+            <CardDescription>
+              Our AI analyzes your property details to create personalized marketing copy
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              <li className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="text-sm">Social media posts</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="text-sm">Property descriptions</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="text-sm">Email templates</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="text-sm">Landing pages</span>
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-purple-600" />
+              Quick & Easy
+            </CardTitle>
+            <CardDescription>
+              Complete the entire process in under 10 minutes
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              <li className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="text-sm">Property information</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="text-sm">Upload photos & videos</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="text-sm">Set preferences</span>
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <span className="text-sm">Review & launch</span>
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
       </div>
 
-      <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-        <CardContent className="p-6">
-          <div className="text-center">
-            <h3 className="text-lg font-semibold mb-2">What You'll Get</h3>
-            <div className="grid md:grid-cols-3 gap-4 text-sm text-muted-foreground">
-              <div>📱 Social media posts</div>
-              <div>📧 Email marketing templates</div>
-              <div>🌐 Landing page content</div>
-              <div>📄 Property descriptions</div>
-              <div>🎯 Targeted ad copy</div>
-              <div>✨ Professional branding</div>
+      <Card className="mb-8">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="h-5 w-5 text-orange-600" />
+            What You'll Get
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Sparkles className="h-6 w-6 text-blue-600" />
+              </div>
+              <h3 className="font-semibold mb-2">Compelling Copy</h3>
+              <p className="text-sm text-muted-foreground">
+                Engaging descriptions that highlight your property's best features
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Target className="h-6 w-6 text-purple-600" />
+              </div>
+              <h3 className="font-semibold mb-2">Targeted Messaging</h3>
+              <p className="text-sm text-muted-foreground">
+                Content tailored to your specific audience and market
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Zap className="h-6 w-6 text-orange-600" />
+              </div>
+              <h3 className="font-semibold mb-2">Ready to Use</h3>
+              <p className="text-sm text-muted-foreground">
+                Materials ready for immediate use across all platforms
+              </p>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <div className="flex justify-center mt-8">
+      <div className="text-center">
         <Button onClick={onNext} size="lg" className="px-8">
           Get Started
-          <Sparkles className="ml-2 h-4 w-4" />
         </Button>
+        <p className="text-sm text-muted-foreground mt-4">
+          This will take approximately 5-10 minutes to complete
+        </p>
       </div>
     </div>
   )
