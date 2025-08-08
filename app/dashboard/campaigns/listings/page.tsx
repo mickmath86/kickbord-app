@@ -163,7 +163,7 @@ export default async function CampaignListingsPage() {
                   </CampaignWizardTrigger>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="flex flex-col space-y-4">
                   {campaignsList.map((campaign) => (
                     <Link key={campaign.id} href={`/dashboard/campaigns/${campaign.id}`}>
                       <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">

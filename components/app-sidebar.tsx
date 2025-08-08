@@ -75,17 +75,17 @@ const data = {
           title: "All Campaigns",
           url: "/dashboard/campaigns",
         },
-        {
-          title: "Listing Campaigns",
-          url: "/dashboard/campaigns/listings",
-        },
+        // {
+        //   title: "Listing Campaigns",
+        //   url: "/dashboard/campaigns/listings",
+        // },
         {
           title: "Create Campaign",
           url: "/dashboard/campaigns/create",
         },
         {
-          title: "Templates",
-          url: "/dashboard/campaigns/templates",
+          title: "Campaign Settings",
+          url: "/dashboard/campaigns/settings",
         },
       ],
     },
@@ -127,29 +127,29 @@ const data = {
         },
       ],
     },
-    {
-      title: "Settings",
-      url: "/dashboard/settings",
-      icon: Settings2,
-      items: [
-        {
-          title: "General",
-          url: "/dashboard/settings",
-        },
-        {
-          title: "Team",
-          url: "/dashboard/settings/team",
-        },
-        {
-          title: "Billing",
-          url: "/dashboard/settings/billing",
-        },
-        {
-          title: "Limits",
-          url: "/dashboard/settings/limits",
-        },
-      ],
-    },
+    // {
+    //   title: "Settings",
+    //   url: "/dashboard/settings",
+    //   icon: Settings2,
+    //   items: [
+    //     {
+    //       title: "General",
+    //       url: "/dashboard/settings",
+    //     },
+    //     {
+    //       title: "Team",
+    //       url: "/dashboard/settings/team",
+    //     },
+    //     {
+    //       title: "Billing",
+    //       url: "/dashboard/settings/billing",
+    //     },
+    //     {
+    //       title: "Limits",
+    //       url: "/dashboard/settings/limits",
+    //     },
+    //   ],
+    // },
   ],
   projects: [
     {

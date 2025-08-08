@@ -1,7 +1,18 @@
 "use client"
 
 import { useState } from "react"
+import { AppSidebar } from "@/components/app-sidebar"
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -88,7 +99,30 @@ export default function AllCampaignsPage() {
   })
 
   return (
-    <div className="space-y-6">
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+      <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem className="hidden md:block">
+                <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator className="hidden md:block" />
+              <BreadcrumbItem>
+                <BreadcrumbLink href="/dashboard/campaigns">Campaign Overview</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator className="hidden md:block" />
+              <BreadcrumbItem>
+                <BreadcrumbPage>All Campaigns</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </header>
+
+        <div className=" flex-1 p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -142,7 +176,7 @@ export default function AllCampaignsPage() {
           <CardDescription>Click on any campaign to view details and performance metrics</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-2 flex flex-col ">
             {filteredCampaigns.map((campaign) => (
               <Link key={campaign.id} href={`/dashboard/campaigns/${campaign.id}`}>
                 <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
@@ -191,5 +225,9 @@ export default function AllCampaignsPage() {
         </CardContent>
       </Card>
     </div>
+
+      </SidebarInset>
+    </SidebarProvider>
+   
   )
 }

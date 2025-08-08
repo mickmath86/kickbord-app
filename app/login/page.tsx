@@ -208,9 +208,9 @@ export default function LoginPage() {
           </div>
           <div className="relative hidden bg-muted md:block md:w-1/2">
             <img
-              src="/placeholder.svg?height=800&width=600&text=Welcome+to+Your+App"
+              src="/login-logo.png"
               alt="Welcome illustration"
-              className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+              className="absolute rounded-md inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
             />
           </div>
         </div>
